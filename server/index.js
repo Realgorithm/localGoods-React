@@ -397,21 +397,28 @@ app.delete('/api/customers/:id', authenticateToken, asyncHandler(async (req, res
 app.get('/api/products', authenticateToken, asyncHandler(async (req, res, next) => {
     const shopDbName = getShopDbNameFromRequest(req);
     const shopPool = await getShopConnection(shopDbName);
-    const [rows] = await shopPool.query('SELECT * FROM products ORDER BY name ASC');
+    const [rows] = await shopPool.query(`
+        SELECT p.*, c.name as category_name 
+        FROM products p 
+        LEFT JOIN categories c ON p.category_id = c.id 
+        ORDER BY p.name ASC
+    `);
     res.json(rows);
 }));
 
 app.post('/api/products', authenticateToken, asyncHandler(async (req, res, next) => {
-    const { id, name, sku, description, price, stock } = req.body;
+    const { id, name, sku, description, price, stock, category_id } = req.body;
     const shopDbName = getShopDbNameFromRequest(req);
     const shopPool = await getShopConnection(shopDbName);
+    const catId = category_id ? parseInt(category_id, 10) : null;
+
     if (id) {
-        const sql = 'UPDATE products SET name = ?, sku = ?, description = ?, price = ?, stock = ? WHERE id = ?';
-        await shopPool.query(sql, [name, sku, description, price, stock, id]);
+        const sql = 'UPDATE products SET name = ?, sku = ?, description = ?, price = ?, stock = ?, category_id = ? WHERE id = ?';
+        await shopPool.query(sql, [name, sku, description, price, stock, catId, id]);
         res.json({ status: 2, message: 'Product updated successfully!' });
     } else {
-        const sql = 'INSERT INTO products (name, sku, description, price, stock) VALUES (?, ?, ?, ?, ?)';
-        const [result] = await shopPool.query(sql, [name, sku, description, price, stock]);
+        const sql = 'INSERT INTO products (name, sku, description, price, stock, category_id) VALUES (?, ?, ?, ?, ?, ?)';
+        const [result] = await shopPool.query(sql, [name, sku, description, price, stock, catId]);
         res.status(201).json({ status: 1, message: 'Product added successfully!', newId: result.insertId });
     }
 }));
@@ -435,6 +442,39 @@ app.get('/api/products/low-stock', authenticateToken, asyncHandler(async (req, r
     // Assuming a low stock threshold of 10
     const [rows] = await shopPool.query('SELECT id, name, stock FROM products WHERE stock <= 10 AND stock > 0 ORDER BY stock ASC');
     res.json(rows);
+}));
+
+// --- Categories API ---
+app.get('/api/categories', authenticateToken, asyncHandler(async (req, res, next) => {
+    const shopPool = await getShopConnection(getShopDbNameFromRequest(req));
+    const [rows] = await shopPool.query('SELECT * FROM categories ORDER BY name ASC');
+    res.json(rows);
+}));
+
+app.post('/api/categories', authenticateToken, asyncHandler(async (req, res, next) => {
+    const { id, name } = req.body;
+    if (!name) {
+        return next(new AppError('Category name is required.', 400));
+    }
+    const shopPool = await getShopConnection(getShopDbNameFromRequest(req));
+    if (id) {
+        await shopPool.query('UPDATE categories SET name = ? WHERE id = ?', [name, id]);
+        res.json({ status: 2, message: 'Category updated successfully!' });
+    } else {
+        const [result] = await shopPool.query('INSERT INTO categories (name) VALUES (?)', [name]);
+        res.status(201).json({ status: 1, message: 'Category added successfully!', newId: result.insertId });
+    }
+}));
+
+app.delete('/api/categories/:id', authenticateToken, asyncHandler(async (req, res, next) => {
+    const { id } = req.params;
+    const shopPool = await getShopConnection(getShopDbNameFromRequest(req));
+    const [result] = await shopPool.query('DELETE FROM categories WHERE id = ?', [id]);
+    if (result.affectedRows > 0) {
+        res.json({ status: 1, message: 'Category deleted successfully!' });
+    } else {
+        next(new AppError('Category not found.', 404));
+    }
 }));
 
 // --- Suppliers API ---

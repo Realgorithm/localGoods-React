@@ -17,24 +17,29 @@ const ProductStatusBadge = ({ stock }) => {
 
 const ProductsPage = () => {
     const [products, setProducts] = useState([]);
+    const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [formData, setFormData] = useState({ id: '', name: '', sku: '', description: '', price: '', stock: '' });
+    const [formData, setFormData] = useState({ id: '', name: '', sku: '', description: '', price: '', stock: '', category_id: '' });
     const [isEditing, setIsEditing] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [confirmAction, setConfirmAction] = useState(null);
 
     useEffect(() => {
-        fetchProducts();
+        fetchPageData();
     }, []);
 
-    const fetchProducts = async () => {
+    const fetchPageData = async () => {
         try {
             setLoading(true);
-            const response = await api.get('/products');
-            setProducts(response.data);
+            const [productsRes, categoriesRes] = await Promise.all([
+                api.get('/products'),
+                api.get('/categories')
+            ]);
+            setProducts(productsRes.data);
+            setCategories(categoriesRes.data);
         } catch (err) {
-            toast.error("Failed to fetch products.");
+            toast.error("Failed to fetch page data.");
             setError(err);
         } finally {
             setLoading(false);
@@ -46,7 +51,7 @@ const ProductsPage = () => {
     };
 
     const resetForm = () => {
-        setFormData({ id: '', name: '', sku: '', description: '', price: '', stock: '' });
+        setFormData({ id: '', name: '', sku: '', description: '', price: '', stock: '', category_id: '' });
         setIsEditing(false);
     };
 
@@ -56,7 +61,7 @@ const ProductsPage = () => {
             const response = await api.post('/products', formData);
             toast.success(response.data.message);
             resetForm();
-            fetchProducts();
+            fetchPageData();
         } catch (err) {
             toast.error(err.response?.data?.message || 'Failed to save product.');
         }
@@ -70,6 +75,7 @@ const ProductsPage = () => {
             description: product.description || '',
             price: product.price || '',
             stock: product.stock || '',
+            category_id: product.category_id || '',
         });
         setIsEditing(true);
     };
@@ -86,7 +92,7 @@ const ProductsPage = () => {
         try {
             const response = await api.delete(`/products/${id}`);
             toast.success(response.data.message);
-            fetchProducts();
+            fetchPageData();
         } catch (err) {
             toast.error(err.response?.data?.message || 'Failed to delete product.');
         }
@@ -97,7 +103,8 @@ const ProductsPage = () => {
 
     const filteredProducts = products.filter(product =>
         product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (product.sku && product.sku.toLowerCase().includes(searchTerm.toLowerCase()))
+        (product.sku && product.sku.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (product.category_name && product.category_name.toLowerCase().includes(searchTerm.toLowerCase()))
     );
 
     return (
@@ -126,6 +133,13 @@ const ProductsPage = () => {
                                     <label className="form-label">SKU</label>
                                     <input type="text" className="form-control" name="sku" value={formData.sku} onChange={handleFormChange} />
                                 </div>
+                                <div className="mb-3">
+                                    <label className="form-label">Category</label>
+                                    <select className="form-select" name="category_id" value={formData.category_id} onChange={handleFormChange}>
+                                        <option value="">-- Select Category --</option>
+                                        {categories.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
+                                    </select>
+                                </div>
                                 <div className="row">
                                     <div className="col-md-6 mb-3">
                                         <label className="form-label">Price (₹)</label>
@@ -153,7 +167,7 @@ const ProductsPage = () => {
                         <div className="card-header d-flex justify-content-between align-items-center">
                             <h5 className="mb-0"><i className="bi bi-list-ul me-2"></i> Product List ({filteredProducts.length})</h5>
                             <div className="w-50">
-                                <input type="text" className="form-control form-control-sm" placeholder="Search by name or SKU..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+                                <input type="text" className="form-control form-control-sm" placeholder="Search by name, SKU, or category..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
                             </div>
                         </div>
                         <div className="card-body">
@@ -162,6 +176,7 @@ const ProductsPage = () => {
                                     <thead>
                                         <tr>
                                             <th>Product</th>
+                                            <th>Category</th>
                                             <th>Price</th>
                                             <th>Stock</th>
                                             <th>Status</th>
@@ -173,8 +188,9 @@ const ProductsPage = () => {
                                             <tr key={product.id}>
                                                 <td>
                                                     <p className="mb-0 fw-bold">{product.name}</p>
-                                                    <small className="text-muted">{product.sku}</small>
+                                                    <small className="text-muted d-block">{product.sku}</small>
                                                 </td>
+                                                <td>{product.category_name || 'N/A'}</td>
                                                 <td>₹{parseFloat(product.price).toFixed(2)}</td>
                                                 <td>{product.stock}</td>
                                                 <td><ProductStatusBadge stock={product.stock} /></td>
@@ -184,7 +200,7 @@ const ProductsPage = () => {
                                                 </td>
                                             </tr>
                                         ))}
-                                        {filteredProducts.length === 0 && (<tr><td colSpan="5" className="text-center p-4">No products found.</td></tr>)}
+                                        {filteredProducts.length === 0 && (<tr><td colSpan="6" className="text-center p-4">No products found.</td></tr>)}
                                     </tbody>
                                 </table>
                             </div>

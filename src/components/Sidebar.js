@@ -31,6 +31,11 @@ const Sidebar = () => {
                     </NavLink>
                 </li>
                 <li>
+                    <NavLink to="/categories" className="nav-link">
+                        <i className="bi bi-tags-fill me-2"></i> Categories
+                    </NavLink>
+                </li>
+                <li>
                     <NavLink to="/suppliers" className="nav-link">
                         <i className="bi bi-truck me-2"></i> Suppliers
                     </NavLink>

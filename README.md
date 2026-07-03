@@ -9,6 +9,7 @@ A modern, full-stack web application designed to help small businesses manage sa
 - **Dashboard**: An at-a-glance overview of key business metrics like total sales, profit, stock levels, and credit balances.
 - **Sales Management**: A complete point-of-sale interface to create new sales, a transaction screen to handle payments, and a searchable history of all sales with payment status (Paid, Partial, Unpaid).
 - **Product Management**: Full CRUD (Create, Read, Update, Delete) functionality for products, including stock tracking, pricing, and a searchable product list with stock status indicators (In Stock, Low Stock, Out of Stock).
+- **Product Categories**: Create and manage categories to organize products efficiently.
 - **Customer Management**: Manage a customer database with contact details and track outstanding credit balances. Includes search and status badges.
 - **Supplier Management**: Manage a list of suppliers, track purchase orders, and monitor outstanding balances owed to them.
 - **Inventory & Purchases**: Record new stock arrivals (purchases), update inventory levels and cost prices automatically, and maintain a searchable history of all purchase orders.
@@ -122,7 +123,6 @@ Remember to set the `DATABASE_URL`, `FRONTEND_URL`, and `JWT_SECRET` environment
 
 ## 🎨 Future Enhancements
 
-- **Product Categories**: Group products for better organization and reporting.
 - **Barcode Scanning**: Use a barcode scanner to quickly add products to the sales cart.
 - **Tax Management (GST)**: Configure tax rates and apply them to sales.
 - **Expense Tracking**: Record general business expenses to calculate true net profit.

@@ -33,6 +33,7 @@ const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'));
 const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'));
 const CustomerPaymentsPage = lazy(() => import('./pages/CustomerPaymentsPage'));
 
+const CategoriesPage = lazy(() => import('./pages/CategoriesPage'));
 // A simple fallback component to show while pages are loading.
 const LoadingFallback = () => (
   <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: 'rgb(15, 23, 42)' }}>
@@ -83,6 +84,7 @@ const AppContent = () => {
                 <Route path="supplier-payments" element={<SupplierPaymentsPage />} />
                 <Route path="reports" element={<ReportsPage />} />
                 <Route path="user-management" element={<UserManagementPage />} />
+                <Route path="categories" element={<CategoriesPage />} />
               </Route>
             </Route>
           </Routes>
