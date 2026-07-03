@@ -10,6 +10,7 @@ function CategoriesPage() {
     const [formData, setFormData] = useState({ id: '', name: '' });
     const [isEditing, setIsEditing] = useState(false);
     const [confirmAction, setConfirmAction] = useState(null);
+    const [searchTerm, setSearchTerm] = useState('');
 
     const fetchCategories = async () => {
         try {
@@ -73,6 +74,10 @@ function CategoriesPage() {
 
     if (loading) return <div className="text-center my-4">Loading categories...</div>;
 
+    const filteredCategories = categories.filter(category =>
+        category.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
     return (
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
             <ConfirmModal
@@ -106,14 +111,17 @@ function CategoriesPage() {
                 <div className="col-lg-8 mb-4">
                     <div className="card">
                         <div className="card-header d-flex justify-content-between align-items-center">
-                            <h5 className="mb-0"><i className="bi bi-tags-fill me-2"></i> Category List ({categories.length})</h5>
+                            <h5 className="mb-0"><i className="bi bi-tags-fill me-2"></i> Category List ({filteredCategories.length})</h5>
+                            <div className="w-50">
+                                <input type="text" className="form-control form-control-sm" placeholder="Search categories..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+                            </div>
                         </div>
                         <div className="card-body">
                             <div className="table-responsive">
                                 <table className="table table-hover">
                                     <thead><tr><th>Name</th><th>Actions</th></tr></thead>
                                     <tbody>
-                                        {categories.map(category => (
+                                        {filteredCategories.map(category => (
                                             <tr key={category.id}>
                                                 <td>{category.name}</td>
                                                 <td>
@@ -122,7 +130,7 @@ function CategoriesPage() {
                                                 </td>
                                             </tr>
                                         ))}
-                                        {categories.length === 0 && (<tr><td colSpan="2" className="text-center p-4">No categories found. Add one to get started!</td></tr>)}
+                                        {filteredCategories.length === 0 && (<tr><td colSpan="2" className="text-center p-4">No categories found.</td></tr>)}
                                     </tbody>
                                 </table>
                             </div>

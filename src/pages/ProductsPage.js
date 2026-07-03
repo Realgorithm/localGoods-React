@@ -3,6 +3,8 @@ import api from '../api';
 import { motion } from 'framer-motion';
 import { toast } from 'react-toastify';
 import ConfirmModal from '../components/ConfirmModal';
+import Barcode from 'react-barcode';
+import BarcodePrintModal from '../components/BarcodePrintModal';
 
 const ProductStatusBadge = ({ stock }) => {
     const stockLevel = parseInt(stock, 10);
@@ -24,6 +26,7 @@ const ProductsPage = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [confirmAction, setConfirmAction] = useState(null);
+    const [productToPrint, setProductToPrint] = useState(null);
 
     useEffect(() => {
         fetchPageData();
@@ -116,6 +119,11 @@ const ProductsPage = () => {
                 body={confirmAction?.body}
                 onConfirm={confirmAction?.onConfirm}
             />
+            <BarcodePrintModal
+                show={!!productToPrint}
+                handleClose={() => setProductToPrint(null)}
+                product={productToPrint}
+            />
             <h1 className="mb-4">Manage Products</h1>
             <div className="row">
                 <div className="col-lg-4 mb-4">
@@ -176,6 +184,7 @@ const ProductsPage = () => {
                                     <thead>
                                         <tr>
                                             <th>Product</th>
+                                            <th>Barcode (SKU)</th>
                                             <th>Category</th>
                                             <th>Price</th>
                                             <th>Stock</th>
@@ -190,17 +199,25 @@ const ProductsPage = () => {
                                                     <p className="mb-0 fw-bold">{product.name}</p>
                                                     <small className="text-muted d-block">{product.sku}</small>
                                                 </td>
+                                                <td>
+                                                    {product.sku ? (
+                                                        <Barcode value={product.sku} height={40} displayValue={false} />
+                                                    ) : (
+                                                        <small className="text-muted">No SKU</small>
+                                                    )}
+                                                </td>
                                                 <td>{product.category_name || 'N/A'}</td>
                                                 <td>₹{parseFloat(product.price).toFixed(2)}</td>
                                                 <td>{product.stock}</td>
                                                 <td><ProductStatusBadge stock={product.stock} /></td>
                                                 <td>
                                                     <button className="btn btn-sm btn-outline-primary me-2" onClick={() => handleEditClick(product)}>Edit</button>
-                                                    <button className="btn btn-sm btn-outline-danger" onClick={() => handleDeleteClick(product.id)}>Delete</button>
+                                                    <button className="btn btn-sm btn-outline-danger mb-1" onClick={() => handleDeleteClick(product.id)}>Delete</button>
+                                                    <button className="btn btn-sm btn-outline-secondary" onClick={() => setProductToPrint(product)} disabled={!product.sku}>Print</button>
                                                 </td>
                                             </tr>
                                         ))}
-                                        {filteredProducts.length === 0 && (<tr><td colSpan="6" className="text-center p-4">No products found.</td></tr>)}
+                                        {filteredProducts.length === 0 && (<tr><td colSpan="7" className="text-center p-4">No products found.</td></tr>)}
                                     </tbody>
                                 </table>
                             </div>

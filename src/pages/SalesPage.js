@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import AddCustomerModal from '../components/AddCustomerModal';
 import ConfirmModal from '../components/ConfirmModal';
 import { toast } from 'react-toastify';
+import useBarcodeScanner from '../hooks/useBarcodeScanner';
 
 const SalesPage = () => {
     // Data from backend
@@ -63,6 +64,23 @@ const SalesPage = () => {
         }
         setSelectedProduct('');
     };
+
+    const handleBarcodeScan = (scannedSku) => {
+        const productToAdd = products.find(p => p.sku === scannedSku);
+        if (productToAdd) {
+            toast.success(`Scanned: ${productToAdd.name}`);
+            const existingCartItem = cart.find(item => item.product_id === productToAdd.id);
+            if (existingCartItem) {
+                updateCartQuantity(productToAdd.id, existingCartItem.quantity + 1);
+            } else {
+                setCart(prevCart => [...prevCart, { product_id: productToAdd.id, name: productToAdd.name, price: productToAdd.price, quantity: 1 }]);
+            }
+        } else {
+            toast.error(`Product with SKU "${scannedSku}" not found.`);
+        }
+    };
+
+    useBarcodeScanner(handleBarcodeScan);
 
     const updateCartQuantity = (productId, newQuantity) => {
         const quantity = Math.max(1, parseInt(newQuantity) || 1);

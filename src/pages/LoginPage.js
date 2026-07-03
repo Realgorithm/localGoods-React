@@ -49,7 +49,7 @@ const LoginPage = () => {
                             <p className="text-muted">Login to your shop to continue</p>
                         </div>
                         <div className="form-floating mb-3">
-                            <input type="text" className="form-control" id="shopName" name="shopName" placeholder="Your Shop Name" value={formData.shopName} onChange={handleChange} required autoFocus />
+                            <input type="text" className="form-control" id="shopName" name="shopName" placeholder="Shop Name" value={formData.shopName} onChange={handleChange} required autoFocus />
                             <label htmlFor="shopName">Shop Name</label>
                         </div>
                         <div className="form-floating mb-3">
