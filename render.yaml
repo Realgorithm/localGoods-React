@@ -14,14 +14,14 @@ services:
     name: mysql-db
     image:
       url: mysql:8.0
-    # Apply the environment group to this service.
-    # This service will now have MYSQL_ROOT_PASSWORD set.
-    envVarGroups:
-      - app-secrets
     disk:
       name: mysql-data
       mountPath: /var/lib/mysql
       sizeGB: 1
+    envVars:
+      # This applies the 'app-secrets' group to this service,
+      # which sets the MYSQL_ROOT_PASSWORD for the database.
+      - fromGroup: app-secrets
 
   # The backend API web service
   - type: web
@@ -29,10 +29,6 @@ services:
     runtime: node
     buildCommand: "npm install"
     startCommand: "node server/index.js"
-    # Apply the same environment group here.
-    # This service will get both JWT_SECRET and MYSQL_ROOT_PASSWORD.
-    envVarGroups:
-      - app-secrets
     envVars:
       - key: NODE_ENV
         value: production
@@ -43,3 +39,6 @@ services:
           property: host
       - key: DB_USER
         value: root
+      # This applies the 'app-secrets' group to this service,
+      # providing it with both the JWT_SECRET and MYSQL_ROOT_PASSWORD.
+      - fromGroup: app-secrets
