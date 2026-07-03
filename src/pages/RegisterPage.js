@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
 import api from '../api';
+import { useNavigate, Link } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import { motion } from 'framer-motion';
 
 const RegisterPage = () => {
@@ -8,75 +9,72 @@ const RegisterPage = () => {
         name: '',
         email: '',
         password: '',
-        shopName: '',
+        shopName: ''
     });
-    const [error, setError] = useState('');
-    const [success, setSuccess] = useState('');
     const navigate = useNavigate();
+    const [loading, setLoading] = useState(false);
 
     const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+        const { name, value } = e.target;
+        // Simple validation for shop name to prevent invalid database names
+        if (name === 'shopName') {
+            setFormData({ ...formData, [name]: value.toLowerCase().replace(/[^a-z0-9_]/g, '') });
+        } else {
+            setFormData({ ...formData, [name]: value });
+        }
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setError('');
-        setSuccess('');
+        setLoading(true);
         try {
-            const response = await api.post('/auth/register', formData);
-            setSuccess(response.data.message + ' You will be redirected to login shortly.');
-            setTimeout(() => {
-                navigate('/login');
-            }, 3000);
+            await api.post('/auth/register', formData);
+            toast.success('Registration successful! Please log in.');
+            navigate('/login');
         } catch (err) {
-            setError(err.response?.data?.message || 'Registration failed. Please try again.');
+            toast.error(err.response?.data?.message || 'Registration failed.');
+        } finally {
+            setLoading(false);
         }
     };
 
     return (
         <motion.div
             className="hero-section text-center"
-            style={{ padding: '5rem 0' }} // Reduced padding
+            style={{ padding: '5rem 0' }} 
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9 }}
-            transition={{ duration: 0.3 }}
         >
             <div className="hero-aurora"></div>
-            <div className="card mx-auto" style={{ maxWidth: '450px' }}>
+            <div className="card auth-form-card mx-auto">
                 <div className="card-body p-4 p-sm-5">
-                    <div className="text-center mb-4">
-                        <h1 className="h3 fw-bold mb-0">Create Your Account</h1>
-                        <p className="text-muted">Join the future of inventory management</p>
-                    </div>
-
-                    {error && <div className="alert alert-danger">{error}</div>}
-                    {success && <div className="alert alert-success">{success}</div>}
-
                     <form onSubmit={handleSubmit}>
-                        <div className="mb-3">
-                            <label htmlFor="name" className="form-label">Full Name</label>
-                            <input className="form-control" type="text" id="name" name="name" onChange={handleChange} required />
+                        <div className="text-center mb-4">
+                            <h1 className="h3 fw-bold mb-0">Create Your Shop</h1>
+                            <p className="text-muted">Get started in minutes</p>
                         </div>
-                        <div className="mb-3">
-                            <label className="form-label" htmlFor="email">Email Address</label>
-                            <input className="form-control" type="email" id="email" name="email" onChange={handleChange} required />
+                        <div className="form-floating mb-3">
+                            <input type="text" className="form-control" id="shopName" name="shopName" placeholder="Your Shop Name" value={formData.shopName} onChange={handleChange} required autoFocus />
+                            <label htmlFor="shopName">Shop Name (letters, numbers, _ only)</label>
                         </div>
-                        <div className="mb-3">
+                        <div className="form-floating mb-3">
+                            <input type="text" className="form-control" id="name" name="name" placeholder="Your Full Name" value={formData.name} onChange={handleChange} required />
+                            <label htmlFor="name">Your Name</label>
+                        </div>
+                        <div className="form-floating mb-3">
+                            <input type="email" className="form-control" id="email" name="email" placeholder="name@example.com" value={formData.email} onChange={handleChange} required />
+                            <label htmlFor="email">Email address</label>
+                        </div>
+                        <div className="form-floating mb-3">
+                            <input type="password" name="password" className="form-control" id="password" placeholder="Password" value={formData.password} onChange={handleChange} required />
                             <label htmlFor="password">Password</label>
-                            <input className="form-control" type="password" id="password" name="password" onChange={handleChange} required />
-                        </div>
-                        <div className="mb-3">
-                            <label className="form-label" htmlFor="shopName">Shop Name</label>
-                            <input className="form-control" type="text" id="shopName" name="shopName" onChange={handleChange} required />
                         </div>
                         <div className="d-grid mb-3">
-                            <motion.button className="btn btn-primary" type="submit" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                                Sign Up
-                            </motion.button>
+                            <button className="btn btn-primary btn-lg" type="submit" disabled={loading}>{loading ? 'Creating Account...' : 'Register'}</button>
                         </div>
                         <p className="text-center text-muted small">
-                            Already have an account? <Link to="/login">Log in</Link>
+                            Already have an account? <Link to="/login">Login here</Link>
                         </p>
                     </form>
                 </div>

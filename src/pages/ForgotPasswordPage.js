@@ -1,21 +1,26 @@
 import React, { useState } from 'react';
 import api from '../api';
+import { toast } from 'react-toastify';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { toast } from 'react-toastify';
 
 const ForgotPasswordPage = () => {
-    const [email, setEmail] = useState('');
-    const [message, setMessage] = useState('');
+    const [formData, setFormData] = useState({
+        email: '',
+        shopName: ''
+    });
     const [loading, setLoading] = useState(false);
+
+    const handleChange = (e) => {
+        setFormData({ ...formData, [e.target.name]: e.target.value });
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
-        setMessage('');
         try {
-            const response = await api.post('/auth/forgot-password', { email });
-            setMessage(response.data.message);
+            const response = await api.post('/auth/forgot-password', formData);
+            toast.info(response.data.message);
         } catch (err) {
             toast.error(err.response?.data?.message || 'An error occurred.');
         } finally {
@@ -25,39 +30,34 @@ const ForgotPasswordPage = () => {
 
     return (
         <motion.div
-            className="container d-flex justify-content-center align-items-center"
-            style={{ minHeight: '100vh' }}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            className="form-container"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
         >
-            <div className="card shadow-lg" style={{ width: '100%', maxWidth: '400px' }}>
-                <div className="card-body p-5">
-                    <h2 className="card-title text-center mb-4">Forgot Password</h2>
-                    <p className="text-center text-muted mb-4">Enter your email and we will send you a link to reset your password.</p>
+            <div className="hero-aurora"></div>
+            <div className="card auth-form-card">
+                <div className="card-body p-4 p-sm-5">
                     <form onSubmit={handleSubmit}>
-                        <div className="mb-3">
-                            <label htmlFor="email" className="form-label">Email address</label>
-                            <input
-                                type="email"
-                                className="form-control"
-                                id="email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                required
-                                autoFocus
-                            />
+                        <div className="text-center mb-4">
+                            <h1 className="h3 fw-bold mb-0">Forgot Password</h1>
+                            <p className="text-center text-muted">Enter your shop name and email to receive a password reset link.</p>
                         </div>
-                        {message && <div className="alert alert-success">{message}</div>}
-                        <div className="d-grid">
-                            <button type="submit" className="btn btn-primary" disabled={loading}>
-                                {loading ? 'Sending...' : 'Send Reset Link'}
-                            </button>
+                        <div className="form-floating mb-3">
+                            <input type="text" className="form-control" id="shopName" name="shopName" placeholder="Your Shop Name" value={formData.shopName} onChange={handleChange} required autoFocus />
+                            <label htmlFor="shopName">Shop Name</label>
+                        </div>
+                        <div className="form-floating mb-3">
+                            <input type="email" className="form-control" id="email" name="email" placeholder="name@example.com" value={formData.email} onChange={handleChange} required />
+                            <label htmlFor="email">Email address</label>
+                        </div>
+                        <div className="d-grid mb-3">
+                            <button className="btn btn-primary btn-lg" type="submit" disabled={loading}>{loading ? 'Sending...' : 'Send Reset Link'}</button>
+                        </div>
+                        <div className="text-center text-muted small">
+                            <Link to="/login">Back to Login</Link>
                         </div>
                     </form>
-                    <div className="text-center mt-4">
-                        <Link to="/login">Back to Login</Link>
-                    </div>
                 </div>
             </div>
         </motion.div>

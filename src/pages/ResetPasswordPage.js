@@ -1,33 +1,40 @@
 import React, { useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import api from '../api';
-import { motion } from 'framer-motion';
 import { toast } from 'react-toastify';
+import { motion } from 'framer-motion';
 
 const ResetPasswordPage = () => {
     const { token } = useParams();
     const navigate = useNavigate();
-    const [password, setPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState('');
-    const [message, setMessage] = useState('');
+    const [formData, setFormData] = useState({
+        password: '',
+        confirmPassword: '',
+        shopName: ''
+    });
     const [loading, setLoading] = useState(false);
+
+    const handleChange = (e) => {
+        setFormData({ ...formData, [e.target.name]: e.target.value });
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (password !== confirmPassword) {
-            toast.error('Passwords do not match.');
+        if (formData.password !== formData.confirmPassword) {
+            toast.error("Passwords do not match.");
             return;
         }
         setLoading(true);
-        setMessage('');
         try {
-            const response = await api.post('/auth/reset-password', { token, password });
-            setMessage(response.data.message);
-            setTimeout(() => {
-                navigate('/login');
-            }, 3000); // Redirect to login after 3 seconds
+            await api.post('/auth/reset-password', {
+                token,
+                password: formData.password,
+                shopName: formData.shopName
+            });
+            toast.success('Password has been reset successfully. You can now log in.');
+            navigate('/login');
         } catch (err) {
-            toast.error(err.response?.data?.message || 'An error occurred.');
+            toast.error(err.response?.data?.message || 'Failed to reset password.');
         } finally {
             setLoading(false);
         }
@@ -35,52 +42,34 @@ const ResetPasswordPage = () => {
 
     return (
         <motion.div
-            className="container d-flex justify-content-center align-items-center"
-            style={{ minHeight: '100vh' }}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            className="form-container"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
         >
-            <div className="card shadow-lg" style={{ width: '100%', maxWidth: '400px' }}>
-                <div className="card-body p-5">
-                    <h2 className="card-title text-center mb-4">Reset Password</h2>
-                    {message ? (
-                        <div className="text-center">
-                            <div className="alert alert-success">{message}</div>
-                            <Link to="/login" className="btn btn-primary">Go to Login</Link>
+            <div className="hero-aurora"></div>
+            <div className="card auth-form-card">
+                <div className="card-body p-4 p-sm-5">
+                    <form onSubmit={handleSubmit}>
+                        <div className="text-center mb-4">
+                            <h1 className="h3 fw-bold mb-0">Reset Your Password</h1>
                         </div>
-                    ) : (
-                        <form onSubmit={handleSubmit}>
-                            <div className="mb-3">
-                                <label htmlFor="password" className="form-label">New Password</label>
-                                <input
-                                    type="password"
-                                    className="form-control"
-                                    id="password"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    required
-                                    autoFocus
-                                />
-                            </div>
-                            <div className="mb-3">
-                                <label htmlFor="confirmPassword" className="form-label">Confirm New Password</label>
-                                <input
-                                    type="password"
-                                    className="form-control"
-                                    id="confirmPassword"
-                                    value={confirmPassword}
-                                    onChange={(e) => setConfirmPassword(e.target.value)}
-                                    required
-                                />
-                            </div>
-                            <div className="d-grid">
-                                <button type="submit" className="btn btn-primary" disabled={loading}>
-                                    {loading ? 'Resetting...' : 'Reset Password'}
-                                </button>
-                            </div>
-                        </form>
-                    )}
+                        <div className="form-floating mb-3">
+                            <input type="text" className="form-control" id="shopName" name="shopName" placeholder="Your Shop Name" value={formData.shopName} onChange={handleChange} required autoFocus />
+                            <label htmlFor="shopName">Shop Name</label>
+                        </div>
+                        <div className="form-floating mb-3">
+                            <input type="password" name="password" className="form-control" id="password" placeholder="New Password" value={formData.password} onChange={handleChange} required />
+                            <label htmlFor="password">New Password</label>
+                        </div>
+                        <div className="form-floating mb-3">
+                            <input type="password" name="confirmPassword" className="form-control" id="confirmPassword" placeholder="Confirm New Password" value={formData.confirmPassword} onChange={handleChange} required />
+                            <label htmlFor="confirmPassword">Confirm New Password</label>
+                        </div>
+                        <div className="d-grid mb-3">
+                            <button className="btn btn-primary btn-lg" type="submit" disabled={loading}>{loading ? 'Resetting...' : 'Reset Password'}</button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </motion.div>

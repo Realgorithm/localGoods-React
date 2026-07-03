@@ -3,6 +3,17 @@ import { createPool } from 'mysql2/promise';
 // A map to cache connection pools for different shops
 const shopPools = new Map();
 
+// New pool to connect to MySQL server without a specific DB.
+// This is for admin tasks like creating new databases.
+const masterPool = createPool({
+  host: 'localhost',
+  user: 'root',
+  password: '', // Your MySQL root password
+  waitForConnections: true,
+  connectionLimit: 5, // Lower limit for admin tasks
+  queueLimit: 0
+});
+
 // This function mimics the behavior of your shopConn() function in PHP.
 // It creates a dedicated connection pool for a specific shop's database.
 const getShopConnection = async (dbName) => {
@@ -30,16 +41,4 @@ const getShopConnection = async (dbName) => {
   return pool;
 };
 
-// Create a connection pool for the central database if needed.
-// This is not currently used but is kept for potential future use.
-const pool = createPool({
-  host: 'localhost',
-  user: 'root',
-  password: '', // Your MySQL root password, if you have one
-  database: 'central_db',
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0
-});
-
-export { pool, getShopConnection };
+export { getShopConnection, masterPool };

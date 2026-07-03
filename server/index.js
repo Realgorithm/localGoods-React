@@ -1,7 +1,7 @@
 import 'dotenv/config.js';
 import express from 'express';
 import cors from 'cors';
-import { getShopConnection } from './db.js';
+import { getShopConnection, masterPool } from './db.js';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
@@ -9,6 +9,7 @@ import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { asyncHandler, AppError } from './utils.js';
+import { getShopSchema } from './schema.js';
 
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
@@ -61,9 +62,8 @@ const getShopDbNameFromRequest = (req) => {
     if (req.user && req.user.shopName) {
         return req.user.shopName;
     }
-    // For public routes like login/register, we fall back to a default.
-    // In a true multi-tenant app, this would be determined differently (e.g., from hostname or a form field).
-    return 'elbaf'; // Default shop database name for testing
+    // This should not happen for authenticated routes. Throw an error to make it explicit.
+    throw new AppError('Could not determine shop database. User may not be properly authenticated.', 500);
 };
 
 // --- Security Middleware ---
@@ -81,35 +81,55 @@ app.post('/api/auth/register', asyncHandler(async (req, res, next) => {
         return next(new AppError('All fields are required.', 400));
     }
 
-    try {
-        const shopPool = await getShopConnection(getShopDbNameFromRequest(req));
+    // Validate shopName to be a valid database name (simple validation)
+    if (!/^[a-zA-Z0-9_]+$/.test(shopName)) {
+        return next(new AppError('Shop name can only contain letters, numbers, and underscores.', 400));
+    }
 
+    let connection;
+    try {
+        // 1. Create the database for the new shop
+        await masterPool.query(`CREATE DATABASE IF NOT EXISTS \`${shopName}\``);
+
+        // 2. Get a connection to the newly created database
+        const shopPool = await getShopConnection(shopName);
+        connection = await shopPool.getConnection();
+
+        // 3. Create all the necessary tables
+        const schemaQueries = getShopSchema();
+        for (const query of schemaQueries) {
+            await connection.query(query);
+        }
+
+        // 4. Insert the new user into the 'users' table
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
-        await shopPool.query(
+        await connection.query(
             'INSERT INTO users (name, email, password, shop_name, role) VALUES (?, ?, ?, ?, ?)',
-            [name, email, hashedPassword, shopName, 'user'] // Default new sign-ups to 'user' role
+            [name, email, hashedPassword, shopName, 'admin'] // The first user of a shop is an admin
         );
 
-        res.status(201).json({ message: 'Registration successful!' });
+        res.status(201).json({ message: 'Registration successful! Your shop has been created.' });
 
     } catch (error) { // Catch specific DB errors
         if (error.code === 'ER_DUP_ENTRY') {
-            return next(new AppError('An account with this email already exists.', 409));
+            return next(new AppError('An account with this email already exists in this shop.', 409));
         }
         next(error);
+    } finally {
+        if (connection) connection.release();
     }
 }));
 
 app.post('/api/auth/login', authLimiter, asyncHandler(async (req, res, next) => {
-    const { email, password } = req.body;
+    const { email, password, shopName } = req.body;
 
-    if (!email || !password) {
-        return next(new AppError('Email and password are required.', 400));
+    if (!email || !password || !shopName) {
+        return next(new AppError('Email, password, and shop name are required.', 400));
     }
 
-    const shopPool = await getShopConnection(getShopDbNameFromRequest(req));
+    const shopPool = await getShopConnection(shopName);
     const [users] = await shopPool.query('SELECT * FROM users WHERE email = ?', [email]);
 
     if (users.length === 0) {
@@ -164,12 +184,12 @@ app.post('/api/auth/logout', (req, res) => {
 });
 
 app.post('/api/auth/forgot-password', authLimiter, asyncHandler(async (req, res, next) => {
-    const { email } = req.body;
-    if (!email) {
-        return next(new AppError('Email is required.', 400));
+    const { email, shopName } = req.body;
+    if (!email || !shopName) {
+        return next(new AppError('Email and shop name are required.', 400));
     }
 
-    const shopPool = await getShopConnection(getShopDbNameFromRequest(req));
+    const shopPool = await getShopConnection(shopName);
     const [users] = await shopPool.query('SELECT * FROM users WHERE email = ?', [email]);
 
     if (users.length === 0) {
@@ -193,7 +213,7 @@ app.post('/api/auth/forgot-password', authLimiter, asyncHandler(async (req, res,
 
     // In a real application, you would use a service like Nodemailer to send an email.
     // For this example, we'll log the reset link to the console.
-    const resetUrl = `http://localhost:3000/reset-password/${resetToken}`;
+    const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password/${resetToken}`;
     console.log('--- PASSWORD RESET LINK (SIMULATED EMAIL) ---');
     console.log(`Password reset link for ${user.email}: ${resetUrl}`);
     console.log('-------------------------------------------');
@@ -203,13 +223,13 @@ app.post('/api/auth/forgot-password', authLimiter, asyncHandler(async (req, res,
 }));
 
 app.post('/api/auth/reset-password', authLimiter, asyncHandler(async (req, res, next) => {
-    const { token, password } = req.body;
-    if (!token || !password) {
-        return next(new AppError('Token and new password are required.', 400));
+    const { token, password, shopName } = req.body;
+    if (!token || !password || !shopName) {
+        return next(new AppError('Token, new password, and shop name are required.', 400));
     }
 
     const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
-    const shopPool = await getShopConnection(getShopDbNameFromRequest(req));
+    const shopPool = await getShopConnection(shopName);
 
     const [users] = await shopPool.query('SELECT * FROM users WHERE reset_token = ? AND reset_token_expiry > NOW()', [hashedToken]);
     if (users.length === 0) {
