@@ -8,7 +8,8 @@ const shopPools = new Map();
 const masterPool = createPool({
   host: process.env.DB_HOST || 'localhost',
   user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '', // In production, this comes from env vars
+  // Use MYSQL_ROOT_PASSWORD in production (from Render env group), fallback for local dev
+  password: process.env.MYSQL_ROOT_PASSWORD || process.env.DB_PASSWORD || '',
   waitForConnections: true,
   connectionLimit: 5, // Lower limit for admin tasks
   queueLimit: 0
@@ -30,7 +31,7 @@ const getShopConnection = async (dbName) => {
   const pool = createPool({
     host: process.env.DB_HOST || 'localhost',
     user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || '',
+    password: process.env.MYSQL_ROOT_PASSWORD || process.env.DB_PASSWORD || '',
     database: dbName,
     waitForConnections: true,
     connectionLimit: 15, // A reasonable default connection limit for a single shop's pool

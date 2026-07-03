@@ -1,42 +1,48 @@
+envGroups:
+  - name: db-credentials
+    envVars:
+      # The MySQL Docker image specifically looks for MYSQL_ROOT_PASSWORD.
+      # We generate it here and share it with both services.
+      - key: MYSQL_ROOT_PASSWORD
+        generateValue: true
+  - name: app-secrets
+    envVars:
+      - key: JWT_SECRET
+        generateValue: true
+
 services:
   # A private service for our MySQL database
   - type: pserv
     name: mysql-db
-    # Use the official MySQL 8 image from Docker Hub
     image:
       url: mysql:8.0
-    envVars:
-      # Render will generate a secure password for the root user.
-      - key: MYSQL_ROOT_PASSWORD
-        generateValue: true
-    # Create a persistent disk to store the database data
+    # Pulls the MYSQL_ROOT_PASSWORD from the env group
+    envGroups:
+      - db-credentials
     disk:
       name: mysql-data
       mountPath: /var/lib/mysql
       sizeGB: 1
 
-  # The backend web service
+  # The backend API web service
   - type: web
     name: localgoods-api
     runtime: node
     buildCommand: "npm install"
     startCommand: "node server/index.js"
+    # Pulls secrets from our env groups
+    envGroups:
+      - db-credentials
+      - app-secrets
     envVars:
       - key: NODE_ENV
         value: production
-      # Connect to the database using its internal service address
+      # The DB host is discovered from the service name
       - key: DB_HOST
         fromService:
           type: pserv
           name: mysql-db
           property: host
+      # The user is 'root' as defined by the MySQL image
       - key: DB_USER
         value: root
-      - key: DB_PASSWORD
-        fromService:
-          type: pserv
-          name: mysql-db
-          property: rootPassword
-      # Render will generate a secure JWT secret
-      - key: JWT_SECRET
-        generateValue: true
