@@ -16,9 +16,9 @@ services:
     name: mysql-db
     image:
       url: mysql:8.0
-    # Pulls the MYSQL_ROOT_PASSWORD from the env group
-    envGroups:
-      - db-credentials
+    envVars:
+      - key: MYSQL_ROOT_PASSWORD
+        fromEnvGroup: db-credentials
     disk:
       name: mysql-data
       mountPath: /var/lib/mysql
@@ -30,10 +30,6 @@ services:
     runtime: node
     buildCommand: "npm install"
     startCommand: "node server/index.js"
-    # Pulls secrets from our env groups
-    envGroups:
-      - db-credentials
-      - app-secrets
     envVars:
       - key: NODE_ENV
         value: production
@@ -46,3 +42,8 @@ services:
       # The user is 'root' as defined by the MySQL image
       - key: DB_USER
         value: root
+      # Pull secrets from the environment groups
+      - key: MYSQL_ROOT_PASSWORD
+        fromEnvGroup: db-credentials
+      - key: JWT_SECRET
+        fromEnvGroup: app-secrets
