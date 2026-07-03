@@ -12,6 +12,7 @@ services:
   # A private service for our MySQL database
   - type: pserv
     name: mysql-db
+    runtime: docker
     image:
       url: mysql:8.0
     disk:
