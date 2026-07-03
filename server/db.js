@@ -6,9 +6,9 @@ const shopPools = new Map();
 // New pool to connect to MySQL server without a specific DB.
 // This is for admin tasks like creating new databases.
 const masterPool = createPool({
-  host: 'localhost',
-  user: 'root',
-  password: '', // Your MySQL root password
+  host: process.env.DB_HOST || 'localhost',
+  user: process.env.DB_USER || 'root',
+  password: process.env.DB_PASSWORD || '', // In production, this comes from env vars
   waitForConnections: true,
   connectionLimit: 5, // Lower limit for admin tasks
   queueLimit: 0
@@ -28,9 +28,9 @@ const getShopConnection = async (dbName) => {
 
   // Otherwise, create a new pool, cache it, and return it.
   const pool = createPool({
-    host: 'localhost',
-    user: 'root',
-    password: '', // Your MySQL root password
+    host: process.env.DB_HOST || 'localhost',
+    user: process.env.DB_USER || 'root',
+    password: process.env.DB_PASSWORD || '',
     database: dbName,
     waitForConnections: true,
     connectionLimit: 15, // A reasonable default connection limit for a single shop's pool

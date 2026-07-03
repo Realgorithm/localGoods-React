@@ -1,0 +1,42 @@
+services:
+  # A private service for our MySQL database
+  - type: pserv
+    name: mysql-db
+    # Use the official MySQL 8 image from Docker Hub
+    image:
+      url: mysql:8.0
+    envVars:
+      # Render will generate a secure password for the root user.
+      - key: MYSQL_ROOT_PASSWORD
+        generateValue: true
+    # Create a persistent disk to store the database data
+    disk:
+      name: mysql-data
+      mountPath: /var/lib/mysql
+      sizeGB: 1
+
+  # The backend web service
+  - type: web
+    name: localgoods-api
+    runtime: node
+    buildCommand: "npm install"
+    startCommand: "node server/index.js"
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # Connect to the database using its internal service address
+      - key: DB_HOST
+        fromService:
+          type: pserv
+          name: mysql-db
+          property: host
+      - key: DB_USER
+        value: root
+      - key: DB_PASSWORD
+        fromService:
+          type: pserv
+          name: mysql-db
+          property: rootPassword
+      # Render will generate a secure JWT secret
+      - key: JWT_SECRET
+        generateValue: true
