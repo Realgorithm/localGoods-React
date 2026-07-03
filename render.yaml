@@ -1,6 +1,6 @@
 # This file defines the services and infrastructure for your application on Render.
-# A single environment group to hold all generated secrets.
-envGroups:
+# A single environment variable group to hold all generated secrets.
+envVarGroups:
   - name: app-secrets
     envVars:
       - key: JWT_SECRET
@@ -14,21 +14,25 @@ services:
     name: mysql-db
     image:
       url: mysql:8.0
-    envVars:
-      # The MySQL Docker image requires this variable to set the root password.
-      # We pull the value from our shared environment group.
-      - key: MYSQL_ROOT_PASSWORD
-        fromEnvGroup: app-secrets
+    # Apply the environment group to this service.
+    # This service will now have MYSQL_ROOT_PASSWORD set.
+    envVarGroups:
+      - app-secrets
     disk:
       name: mysql-data
       mountPath: /var/lib/mysql
       sizeGB: 1
+
   # The backend API web service
   - type: web
     name: localgoods-api
     runtime: node
     buildCommand: "npm install"
     startCommand: "node server/index.js"
+    # Apply the same environment group here.
+    # This service will get both JWT_SECRET and MYSQL_ROOT_PASSWORD.
+    envVarGroups:
+      - app-secrets
     envVars:
       - key: NODE_ENV
         value: production
@@ -39,8 +43,3 @@ services:
           property: host
       - key: DB_USER
         value: root
-      # Pull the rest of the secrets from our shared environment group.
-      - key: MYSQL_ROOT_PASSWORD
-        fromEnvGroup: app-secrets
-      - key: JWT_SECRET
-        fromEnvGroup: app-secrets
