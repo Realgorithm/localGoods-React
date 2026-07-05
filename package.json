@@ -37,12 +37,14 @@
     "nodemon": "^3.1.2"
   },
   "scripts": {
-    "start": "react-scripts start",
+    "start": "npm run build && node server/index.js",
+    "start:client": "react-scripts start",
+    "start:server": "node server/index.js",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "server": "nodemon server/index.js",
-    "dev": "concurrently \"npm run server\" \"npm run start\""
+    "dev": "concurrently \"npm run server\" \"npm run start:client\""
   },
   "eslintConfig": {
     "extends": [

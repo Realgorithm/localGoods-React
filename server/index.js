@@ -1,6 +1,8 @@
 import 'dotenv/config.js';
 import express from 'express';
 import cors from 'cors';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { getShopConnection, masterPool } from './db.js';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
@@ -15,6 +17,9 @@ const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
     throw new Error('FATAL ERROR: JWT_SECRET is not defined.');
 }
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -938,6 +943,19 @@ app.get('/api/reports/sales-over-time', authenticateToken, asyncHandler(async (r
 
     res.json(formattedResults);
 }));
+
+// --- Serve Static Frontend ---
+// In production, serve the static files from the React app's build folder.
+if (process.env.NODE_ENV === 'production') {
+    const buildPath = path.join(__dirname, '..', 'build');
+    app.use(express.static(buildPath));
+
+    // For any request that doesn't match an API route, send back the React app's index.html file.
+    app.get('*', (req, res) => {
+        res.sendFile(path.join(buildPath, 'index.html'));
+    });
+}
+
 
 // --- Global Error Handling Middleware ---
 app.use((err, req, res, next) => {
