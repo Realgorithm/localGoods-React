@@ -94,6 +94,12 @@ REACT_APP_API_URL=http://localhost:3001/api
 # Backend Configuration
 BACKEND_PORT=3001
 
+# Local Database Configuration (not used on Railway)
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=your_mysql_password
+DB_DATABASE=elbaf
+
 # Security
 JWT_SECRET=generate-a-super-long-and-random-secret-key
 JWT_COOKIE_EXPIRES_IN=1d
