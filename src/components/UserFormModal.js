@@ -5,17 +5,22 @@ import { toast } from 'react-toastify';
 const UserFormModal = ({ show, handleClose, onSave, user }) => {
     const [formData, setFormData] = useState({ name: '', email: '', password: '', role: 'user' });
     const isEditing = !!user;
-
+    
     useEffect(() => {
-        if (isEditing && user) {
+        if (user) {
             setFormData({
                 name: user.name,
                 email: user.email,
+                password: '',
                 role: user.role,
             });
         } else {
-            // Reset for adding a new user
-            setFormData({ name: '', email: '', password: '', role: 'user' });
+            setFormData({
+                name: '',
+                email: '',
+                password: '',
+                role: 'user',
+            });
         }
     }, [user, show]);
 
