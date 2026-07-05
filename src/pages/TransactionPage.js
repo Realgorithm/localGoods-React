@@ -16,7 +16,7 @@ const TransactionPage = () => {
     const [amountTendered, setAmountTendered] = useState('');
     const [change, setChange] = useState(0);
     const [isCompleted, setIsCompleted] = useState(false);
-    const receiptRef = useRef();
+    const componentRef = useRef(null);
 
     useEffect(() => {
         const fetchSale = async () => {
@@ -59,8 +59,9 @@ const TransactionPage = () => {
         }
     };
 
+
     const handlePrint = useReactToPrint({
-        content: () => receiptRef.current,
+        contentRef: componentRef,
     });
 
     if (loading) return <div className="text-center my-4">Loading Transaction...</div>;
@@ -70,7 +71,7 @@ const TransactionPage = () => {
     return (
         <>
             {/* The Receipt component must always be in the DOM for the ref to be accessible for printing. */}
-            <div style={{ display: 'none' }}><Receipt ref={receiptRef} sale={sale} items={items} shopName={user?.shopName} /></div>
+            <div style={{ display: 'none' }}><Receipt ref={componentRef} sale={sale} items={items} shopName={user?.shopName} /></div>
 
             {isCompleted ? (
                 <div className="card mx-auto" style={{ maxWidth: '500px' }}>

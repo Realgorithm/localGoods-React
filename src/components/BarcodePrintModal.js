@@ -4,9 +4,10 @@ import Barcode from 'react-barcode';
 import { useReactToPrint } from 'react-to-print';
 
 const BarcodePrintModal = ({ show, handleClose, product }) => {
-    const componentRef = useRef();
+    const componentRef = useRef(null);
+
     const handlePrint = useReactToPrint({
-        content: () => componentRef.current,
+        contentRef: componentRef,
     });
 
     if (!product) return null;
@@ -17,11 +18,22 @@ const BarcodePrintModal = ({ show, handleClose, product }) => {
                 <Modal.Title>Print Barcode</Modal.Title>
             </Modal.Header>
             <Modal.Body>
-                <div ref={componentRef} className="text-center p-4">
-                    <h5 className="mb-2">{product.name}</h5>
-                    <p className="fw-bold fs-4 mb-3">₹{parseFloat(product.price).toFixed(2)}</p>
+                <div
+                    ref={componentRef}
+                    className="barcode-label"
+                >
+                    <h6 className="fw-bold mb-1">{product.name}</h6>
+                    <p className="fw-bold mb-2">₹{parseFloat(product.price).toFixed(2)}</p>
                     {product.sku ? (
-                        <Barcode value={product.sku} />
+                        <Barcode
+                            value={product.sku}
+                            format="CODE128"
+                            width={1.5}
+                            height={45}
+                            fontSize={12}
+                            margin={0}
+                            displayValue={true}
+                        />
                     ) : (
                         <p className="text-danger">This product does not have an SKU.</p>
                     )}

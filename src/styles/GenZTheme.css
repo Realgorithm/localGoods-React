@@ -199,3 +199,27 @@ body[data-bs-theme="light"] .hero-aurora {
     border-left: 4px solid var(--primary-glow);
     background: rgba(var(--card-bg-rgb), 0.1);
 }
+.barcode-label{
+    width:70mm;
+    min-height:35mm;
+
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+
+    padding:6px;
+    background:white;
+}
+
+@media print{
+
+body{
+    margin:0;
+}
+
+.barcode-label{
+    width:70mm;
+    page-break-inside:avoid;
+}
+}
