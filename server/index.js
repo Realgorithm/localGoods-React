@@ -26,7 +26,6 @@ const PORT = process.env.PORT || 3001;
 // --- Middleware ---
 app.use(helmet()); // Set security-related HTTP headers
 
-import cors from "cors";
 
 const allowedOrigins = [
     "http://localhost:3000",
