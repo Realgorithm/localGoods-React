@@ -26,23 +26,32 @@ const PORT = process.env.PORT || 3001;
 // --- Middleware ---
 app.use(helmet()); // Set security-related HTTP headers
 
+import cors from "cors";
+
 const allowedOrigins = [
     "http://localhost:3000",
+    "https://localgoods.netlify.app",
     process.env.FRONTEND_URL
 ].filter(Boolean);
 
 app.use(cors({
-    origin(origin, callback) {
+    origin: function (origin, callback) {
         if (!origin) return callback(null, true);
 
         if (allowedOrigins.includes(origin)) {
             return callback(null, true);
         }
 
-        return callback(new Error("Not allowed by CORS"));
+        console.log("Blocked Origin:", origin);
+        callback(new Error("Not allowed by CORS"));
     },
-    credentials: true
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"]
 }));
+
+// Handle preflight requests
+app.options("*", cors());
 app.use(cookieParser()); // To parse cookies
 app.use(express.json()); // To parse incoming JSON bodies
 app.use(express.urlencoded({ extended: true })); // To parse URL-encoded bodies
@@ -189,8 +198,8 @@ app.post('/api/auth/login', authLimiter, asyncHandler(async (req, res, next) => 
     res.cookie('token', token, {
         httpOnly: true, // The cookie is not accessible via JavaScript
         secure: process.env.NODE_ENV === 'production', // Only send over HTTPS in production
-        sameSite: 'strict', // Mitigate CSRF attacks
-        maxAge: 24 * 60 * 60 * 1000 // 1 day in milliseconds
+        sameSite: 'none', // Mitigate CSRF attacks
+        maxAge: 7 * 24 * 60 * 60 * 1000 // 1 day in milliseconds
     });
 
     res.json({
