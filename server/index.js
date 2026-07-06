@@ -600,7 +600,7 @@ app.post('/api/receiving', authenticateToken, asyncHandler(async (req, res, next
         if (credit_owed > 0 && paid > 0) status = 2; // 2=Partial
         if (paid === 0) status = 3; // 3=Unpaid
         const receivingSql = 'INSERT INTO receiving (shop_id, ref_no, supplier_id, total_amount, status) VALUES (?, ?, ?, ?, ?)';
-        const [receivingResult] = await connection.query(shopId, receivingSql, [ref_no, supplier_id, total, status]);
+        const [receivingResult] = await connection.query(receivingSql, [shopId, ref_no, supplier_id, total, status]);
         const receivingId = receivingResult.insertId;
 
         for (const item of items) {
