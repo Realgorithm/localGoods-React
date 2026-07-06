@@ -138,8 +138,8 @@ app.post('/api/auth/register', asyncHandler(async (req, res, next) => {
         const hashedPassword = await bcrypt.hash(password, salt);
 
         await connection.query(
-            'INSERT INTO users (name, email, password, shop_id, role) VALUES (?, ?, ?, ?, ?)',
-            [name, email, hashedPassword, shopId, 'admin']
+            'INSERT INTO users (name, email, password, role, shop_id) VALUES (?, ?, ?, ?, ?)',
+            [name, email, hashedPassword, 'admin', shopId]
         );
 
         await connection.commit();
@@ -315,8 +315,8 @@ app.post('/api/users', authenticateToken, isAdmin, asyncHandler(async (req, res,
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
         await pool.query(
-            'INSERT INTO users (name, email, password, shop_id, role) VALUES (?, ?, ?, ?, ?)',
-            [name, email, hashedPassword, shopId, role]
+            'INSERT INTO users (name, email, password, role, shop_id) VALUES (?, ?, ?, ?, ?)',
+            [name, email, hashedPassword, role, shopId]
         );
         res.status(201).json({ message: 'User created successfully!' });
     } catch (error) {
@@ -428,8 +428,8 @@ app.post('/api/customers', authenticateToken, asyncHandler(async (req, res, next
         if (result.affectedRows === 0) return next(new AppError('Customer not found or not part of your shop.', 404));
         res.json({ status: 2, message: 'Customer updated successfully!' });
     } else {
-        const sql = 'INSERT INTO customers (name, contact, address, shop_id) VALUES (?, ?, ?, ?)';
-        const [result] = await pool.query(sql, [name, contact, address, shopId]);
+        const sql = 'INSERT INTO customers (name, shop_id, contact, address) VALUES (?, ?, ?, ?)';
+        const [result] = await pool.query(sql, [name, shopId, contact, address]);
         res.status(201).json({ status: 1, message: 'Customer added successfully!', newId: result.insertId });
     }
 }));
@@ -473,8 +473,8 @@ app.post('/api/products', authenticateToken, asyncHandler(async (req, res, next)
         if (result.affectedRows === 0) return next(new AppError('Product not found or not part of your shop.', 404));
         res.json({ status: 2, message: 'Product updated successfully!' });
     } else {
-        const sql = 'INSERT INTO products (name, sku, description, price, cost_price, stock, category_id, shop_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
-        const [result] = await pool.query(sql, [name, sku, description, price, cost_price, stock, catId, shopId]);
+        const sql = 'INSERT INTO products (shop_id, name, sku, description, price, cost_price, stock, category_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
+        const [result] = await pool.query(sql, [shopId, name, sku, description, price, cost_price, stock, catId]);
         res.status(201).json({ status: 1, message: 'Product added successfully!', newId: result.insertId });
     }
 }));
@@ -515,7 +515,7 @@ app.post('/api/categories', authenticateToken, asyncHandler(async (req, res, nex
         if (result.affectedRows === 0) return next(new AppError('Category not found or not part of your shop.', 404));
         res.json({ status: 2, message: 'Category updated successfully!' });
     } else {
-        const [result] = await pool.query('INSERT INTO categories (name, shop_id) VALUES (?, ?)', [name, shopId]);
+        const [result] = await pool.query('INSERT INTO categories ( shop_id, name) VALUES (?, ?)', [shopId, name]);
         res.status(201).json({ status: 1, message: 'Category added successfully!', newId: result.insertId });
     }
 }));
@@ -548,8 +548,8 @@ app.post('/api/suppliers', authenticateToken, asyncHandler(async (req, res, next
         if (result.affectedRows === 0) return next(new AppError('Supplier not found or not part of your shop.', 404));
         res.json({ status: 2, message: 'Supplier updated successfully!' });
     } else {
-        const sql = 'INSERT INTO suppliers (name, contact, address, shop_id) VALUES (?, ?, ?, ?)';
-        const [result] = await pool.query(sql, [name, contact, address, shopId]);
+        const sql = 'INSERT INTO suppliers (shop_id, name, contact, address) VALUES (?, ?, ?, ?)';
+        const [result] = await pool.query(sql, [shopId, name, contact, address]);
         res.status(201).json({ status: 1, message: 'Supplier added successfully!', newId: result.insertId });
     }
 }));
@@ -599,14 +599,14 @@ app.post('/api/receiving', authenticateToken, asyncHandler(async (req, res, next
         let status = 1; // 1=Paid
         if (credit_owed > 0 && paid > 0) status = 2; // 2=Partial
         if (paid === 0) status = 3; // 3=Unpaid
-        const receivingSql = 'INSERT INTO receiving (ref_no, supplier_id, total_amount, status, shop_id) VALUES (?, ?, ?, ?, ?)';
-        const [receivingResult] = await connection.query(receivingSql, [ref_no, supplier_id, total, status, shopId]);
+        const receivingSql = 'INSERT INTO receiving (shop_id, ref_no, supplier_id, total_amount, status) VALUES (?, ?, ?, ?, ?)';
+        const [receivingResult] = await connection.query(shopId, receivingSql, [ref_no, supplier_id, total, status]);
         const receivingId = receivingResult.insertId;
 
         for (const item of items) {
             // Insert into receiving_items
-            const itemSql = 'INSERT INTO receiving_items (receiving_id, product_id, quantity, cost_price) VALUES (?, ?, ?, ?)';
-            await connection.query(itemSql, [receivingId, item.product_id, item.quantity, item.cost_price]);
+            const itemSql = 'INSERT INTO receiving_items (shop_id, receiving_id, product_id, quantity, cost_price) VALUES (?, ?, ?, ?, ?)';
+            await connection.query(itemSql, [shopId, receivingId, item.product_id, item.quantity, item.cost_price]);
 
             // Update product stock and average cost price
             const stockSql = `
@@ -671,16 +671,16 @@ app.post('/api/sales', authenticateToken, asyncHandler(async (req, res, next) =>
         const ref_no = `SALE-${Date.now()}`;
 
         // 2. Insert into sales table
-        const saleSql = 'INSERT INTO sales (ref_no, customer_id, actual_amount, total_amount, amount_tendered, amount_change, paymode, status, shop_id) VALUES (?, ?, ?, ?, 0, 0, 0, 0, ?)'; // paymode 0 = pending, status 0 = pending
-        const [saleResult] = await connection.query(saleSql, [ref_no, customer_id, actual_amount, total_amount, shopId]);
+        const saleSql = 'INSERT INTO sales (shop_id, ref_no, customer_id, actual_amount, total_amount, amount_tendered, amount_change, paymode, status) VALUES (?, ?, ?, ?, 0, 0, 0, 0, ?)'; // paymode 0 = pending, status 0 = pending
+        const [saleResult] = await connection.query(saleSql, [shopId, ref_no, customer_id, actual_amount, total_amount]);
         const saleId = saleResult.insertId;
 
         // 3. Insert into sales_items and update product stock
         for (const item of items) {
             // Insert item
             const [[product]] = await connection.query('SELECT cost_price FROM products WHERE id = ? AND shop_id = ?', [item.product_id, shopId]);
-            const itemSql = 'INSERT INTO sales_items (sale_id, product_id, quantity, price, cost_price) VALUES (?, ?, ?, ?, ?)';
-            await connection.query(itemSql, [saleId, item.product_id, item.quantity, item.price, product.cost_price || 0]);
+            const itemSql = 'INSERT INTO sales_items (shop_id, sale_id, product_id, quantity, price, cost_price) VALUES (?, ?, ?, ?, ?, ?)';
+            await connection.query(itemSql, [shopId, saleId, item.product_id, item.quantity, item.price, product.cost_price || 0]);
 
             // Decrement stock
             const stockSql = 'UPDATE products SET stock = stock - ? WHERE id = ? AND stock >= ? AND shop_id = ?';
@@ -810,8 +810,8 @@ app.post('/api/payments/customers', authenticateToken, asyncHandler(async (req, 
         await connection.beginTransaction();
 
         // 1. Record the payment
-        const paymentSql = 'INSERT INTO customer_payments (customer_id, amount_paid, shop_id) VALUES (?, ?, ?)';
-        await connection.query(paymentSql, [customer_id, amount_paid, shopId]);
+        const paymentSql = 'INSERT INTO customer_payments (shop_id, customer_id, amount_paid) VALUES (?, ?, ?)';
+        await connection.query(paymentSql, [shopId, customer_id, amount_paid]);
 
         // 2. Update the customer's balance
         const balanceSql = 'UPDATE customers SET balance = balance - ? WHERE id = ? AND shop_id = ?';
@@ -858,8 +858,8 @@ app.post('/api/payments/suppliers', authenticateToken, asyncHandler(async (req, 
         await connection.beginTransaction();
 
         // 1. Record the payment
-        const paymentSql = 'INSERT INTO supplier_payments (supplier_id, amount_paid, shop_id) VALUES (?, ?, ?)';
-        await connection.query(paymentSql, [supplier_id, amount_paid, shopId]);
+        const paymentSql = 'INSERT INTO supplier_payments (shop_id, supplier_id, amount_paid) VALUES (?, ?, ?)';
+        await connection.query(paymentSql, [shopId, supplier_id, amount_paid]);
 
         // 2. Update the supplier's balance
         const balanceSql = 'UPDATE suppliers SET balance = balance - ? WHERE id = ? AND shop_id = ?';
