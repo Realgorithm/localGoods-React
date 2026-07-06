@@ -21,16 +21,27 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = process.env.BACKEND_PORT || 3001;
+const PORT = process.env.PORT || 3001;
 
 // --- Middleware ---
 app.use(helmet()); // Set security-related HTTP headers
 
-const allowedOrigins = ['http://localhost:3000', process.env.FRONTEND_URL].filter(Boolean);
+const allowedOrigins = [
+    "http://localhost:3000",
+    process.env.FRONTEND_URL
+].filter(Boolean);
 
 app.use(cors({
-    origin: allowedOrigins,
-    credentials: true, // Allow cookies to be sent
+    origin(origin, callback) {
+        if (!origin) return callback(null, true);
+
+        if (allowedOrigins.includes(origin)) {
+            return callback(null, true);
+        }
+
+        return callback(new Error("Not allowed by CORS"));
+    },
+    credentials: true
 }));
 app.use(cookieParser()); // To parse cookies
 app.use(express.json()); // To parse incoming JSON bodies
@@ -931,15 +942,15 @@ app.get('/api/reports/sales-over-time', authenticateToken, asyncHandler(async (r
 
 // --- Serve Static Frontend ---
 // In production, serve the static files from the React app's build folder.
-if (process.env.NODE_ENV === 'production') {
-    const buildPath = path.join(__dirname, '..', 'build');
-    app.use(express.static(buildPath));
+// if (process.env.NODE_ENV === 'production') {
+//     const buildPath = path.join(__dirname, '..', 'build');
+//     app.use(express.static(buildPath));
 
-    // For any request that doesn't match an API route, send back the React app's index.html file.
-    app.get('*', (req, res) => {
-        res.sendFile(path.join(buildPath, 'index.html'));
-    });
-}
+//     // For any request that doesn't match an API route, send back the React app's index.html file.
+//     app.get('*', (req, res) => {
+//         res.sendFile(path.join(buildPath, 'index.html'));
+//     });
+// }
 
 
 // --- Global Error Handling Middleware ---
@@ -975,6 +986,11 @@ app.use((err, req, res, next) => {
     }
 });
 
-app.listen(PORT, () => {
-    console.log(`Backend server is running on port: ${PORT}`);
+app.listen(PORT, "0.0.0.0", () => {
+    console.log("=================================");
+    console.log("🚀 LocalGoods API Started");
+    console.log(`🌐 Port: ${PORT}`);
+    console.log(`📦 Environment: ${process.env.NODE_ENV}`);
+    console.log(`🗄️ Database: ${process.env.DB_DATABASE}`);
+    console.log("=================================");
 });
