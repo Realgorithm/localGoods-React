@@ -47,6 +47,23 @@ app.use(cookieParser()); // To parse cookies
 app.use(express.json()); // To parse incoming JSON bodies
 app.use(express.urlencoded({ extended: true })); // To parse URL-encoded bodies
 
+app.get("/health", async (req, res) => {
+    try {
+        const [db] = await pool.query("SELECT DATABASE() AS db");
+        const [tables] = await pool.query("SHOW TABLES");
+
+        res.json({
+            status: "OK",
+            database: db[0].db,
+            tables: tables.length
+        });
+    } catch (err) {
+        res.status(500).json({
+            error: err.message
+        });
+    }
+});
+
 // JWT Authentication Middleware to protect routes
 const authenticateToken = (req, res, next) => {
     const authHeader = req.headers['authorization'];
