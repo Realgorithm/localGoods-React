@@ -10,7 +10,7 @@ import jwt from 'jsonwebtoken';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
-import { asyncHandler, AppError } from './utils.js';
+import { asyncHandler, AppError, isValidEmail, isValidPassword, ttlToMs } from './utils.js';
 
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
@@ -55,20 +55,14 @@ app.use(cookieParser()); // To parse cookies
 app.use(express.json()); // To parse incoming JSON bodies
 app.use(express.urlencoded({ extended: true })); // To parse URL-encoded bodies
 
+// Lightweight liveness/readiness probe. Deliberately avoids revealing any
+// database or schema details to unauthenticated callers.
 app.get("/health", async (req, res) => {
     try {
-        const [db] = await pool.query("SELECT DATABASE() AS db");
-        const [tables] = await pool.query("SHOW TABLES");
-
-        res.json({
-            status: "OK",
-            database: db[0].db,
-            tables: tables.length
-        });
+        await pool.query("SELECT 1");
+        res.json({ status: "OK" });
     } catch (err) {
-        res.status(500).json({
-            error: err.message
-        });
+        res.status(503).json({ status: "unavailable" });
     }
 });
 
@@ -100,8 +94,20 @@ const isAdmin = (req, res, next) => {
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 20, // Limit each IP to 20 requests per windowMs
-    message: 'Too many login attempts from this IP, please try again after 15 minutes',
+    message: 'Too many attempts from this IP, please try again after 15 minutes',
+    standardHeaders: true,
+    legacyHeaders: false,
 });
+
+// A more generous backstop limiter across the whole API, to blunt basic
+// brute-force / DoS attempts without affecting normal usage.
+const apiLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 600,
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+app.use('/api', apiLimiter);
 
 // --- API Routes ---
 // IMPORTANT REFACTORING NOTE:
@@ -109,11 +115,19 @@ const authLimiter = rateLimit({
 // The following code has been refactored to use a single database with a `shop_id` in each table to separate tenant data.
 // You must update your database schema to reflect these changes before deploying.
 
-app.post('/api/auth/register', asyncHandler(async (req, res, next) => {
+app.post('/api/auth/register', authLimiter, asyncHandler(async (req, res, next) => {
     const { name, email, password, shopName } = req.body;
 
     if (!name || !email || !password || !shopName) {
         return next(new AppError('All fields are required.', 400));
+    }
+
+    if (!isValidEmail(email)) {
+        return next(new AppError('Please enter a valid email address.', 400));
+    }
+
+    if (!isValidPassword(password)) {
+        return next(new AppError('Password must be at least 8 characters long.', 400));
     }
 
     // Validate shopName to be a valid database name (simple validation)
@@ -192,13 +206,18 @@ app.post('/api/auth/login', authLimiter, asyncHandler(async (req, res, next) => 
     };
 
     // Sign the token
-    const token = jwt.sign(payload, JWT_SECRET, { expiresIn: process.env.JWT_COOKIE_EXPIRES_IN || '1d' });
+    const tokenTtl = process.env.JWT_COOKIE_EXPIRES_IN || '1d';
+    const token = jwt.sign(payload, JWT_SECRET, { expiresIn: tokenTtl });
 
+    const isProduction = process.env.NODE_ENV === 'production';
     res.cookie('token', token, {
         httpOnly: true, // The cookie is not accessible via JavaScript
-        secure: process.env.NODE_ENV === 'production', // Only send over HTTPS in production
-        sameSite: 'none', // Mitigate CSRF attacks
-        maxAge: 7 * 24 * 60 * 60 * 1000 // 1 day in milliseconds
+        // SameSite=None requires Secure in modern browsers, and only makes
+        // sense when the API and frontend are on different domains (as in
+        // production). In local dev they're same-site, so use Lax + non-secure.
+        secure: isProduction,
+        sameSite: isProduction ? 'none' : 'lax',
+        maxAge: ttlToMs(tokenTtl), // keep the cookie's life in sync with the token's actual expiry
     });
 
     res.json({
@@ -271,6 +290,10 @@ app.post('/api/auth/reset-password', authLimiter, asyncHandler(async (req, res, 
         return next(new AppError('Token, new password, and shop name are required.', 400));
     }
 
+    if (!isValidPassword(password)) {
+        return next(new AppError('Password must be at least 8 characters long.', 400));
+    }
+
     const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
 
     const [[shop]] = await pool.query('SELECT id FROM shops WHERE name = ?', [shopName]);
@@ -309,6 +332,18 @@ app.post('/api/users', authenticateToken, isAdmin, asyncHandler(async (req, res,
 
     if (!name || !email || !password || !role) {
         return next(new AppError('Name, email, password, and role are required.', 400));
+    }
+
+    if (!isValidEmail(email)) {
+        return next(new AppError('Please enter a valid email address.', 400));
+    }
+
+    if (!isValidPassword(password)) {
+        return next(new AppError('Password must be at least 8 characters long.', 400));
+    }
+
+    if (!['admin', 'user'].includes(role)) {
+        return next(new AppError('Invalid role specified.', 400));
     }
 
     try {
@@ -583,8 +618,21 @@ app.post('/api/receiving', authenticateToken, asyncHandler(async (req, res, next
     const { supplier_id, items, total_amount, amount_paid } = req.body;
     const shopId = req.user.shopId;
 
-    if (!supplier_id || !items || items.length === 0) {
+    if (!supplier_id || !Array.isArray(items) || items.length === 0) {
         return next(new AppError('Supplier and items are required.', 400));
+    }
+
+    for (const item of items) {
+        const qty = Number(item.quantity);
+        const cost = Number(item.cost_price);
+        if (!item.product_id || !Number.isFinite(qty) || qty <= 0 || !Number.isFinite(cost) || cost < 0) {
+            return next(new AppError('Each item must include a valid product, a positive quantity, and a non-negative cost price.', 400));
+        }
+    }
+
+    const total = parseFloat(total_amount);
+    if (!Number.isFinite(total) || total < 0) {
+        return next(new AppError('A valid total amount is required.', 400));
     }
 
     let connection;
@@ -593,8 +641,7 @@ app.post('/api/receiving', authenticateToken, asyncHandler(async (req, res, next
         await connection.beginTransaction();
 
         const ref_no = `RECV-${Date.now()}`;
-        const paid = parseFloat(amount_paid) || 0;
-        const total = parseFloat(total_amount);
+        const paid = Math.max(parseFloat(amount_paid) || 0, 0);
         const credit_owed = total - paid;
         let status = 1; // 1=Paid
         if (credit_owed > 0 && paid > 0) status = 2; // 2=Partial
@@ -655,32 +702,67 @@ app.get('/api/sales', authenticateToken, asyncHandler(async (req, res, next) => 
 
 // POST /api/sales - Creates a new sale in a pending state and decrements stock
 app.post('/api/sales', authenticateToken, asyncHandler(async (req, res, next) => {
-    const { customer_id, items, actual_amount, total_amount } = req.body;
+    const { customer_id, items, discount } = req.body;
     const shopId = req.user.shopId;
 
-    if (!customer_id || !items || items.length === 0) {
+    if (!customer_id || !Array.isArray(items) || items.length === 0) {
         return next(new AppError('Customer and items are required.', 400));
     }
+
+    // Basic shape validation up front. Price is deliberately NOT accepted from
+    // the client below — it is always looked up from the database so a
+    // tampered request can't sell a product below (or above) its real price.
+    for (const item of items) {
+        const qty = Number(item.quantity);
+        if (!item.product_id || !Number.isInteger(qty) || qty <= 0) {
+            return next(new AppError('Each item must reference a valid product with a positive whole-number quantity.', 400));
+        }
+    }
+
+    const discountAmount = Math.max(parseFloat(discount) || 0, 0);
 
     let connection;
     try {
         connection = await pool.getConnection();
         await connection.beginTransaction();
 
-        // 1. Create a reference number
         const ref_no = `SALE-${Date.now()}`;
 
-        // 2. Insert into sales table
-        const saleSql = 'INSERT INTO sales (shop_id, ref_no, customer_id, actual_amount, total_amount, amount_tendered, amount_change, paymode, status) VALUES (?, ?, ?, ?, 0, 0, 0, 0, ?)'; // paymode 0 = pending, status 0 = pending
-        const [saleResult] = await connection.query(saleSql, [shopId, ref_no, customer_id, actual_amount, total_amount]);
+        let actualAmount = 0;
+        const resolvedItems = [];
+
+        for (const item of items) {
+            const qty = parseInt(item.quantity, 10);
+            // Lock the row for the duration of the transaction so two
+            // concurrent sales can't both oversell the same stock.
+            const [[product]] = await connection.query(
+                'SELECT price, cost_price, stock FROM products WHERE id = ? AND shop_id = ? FOR UPDATE',
+                [item.product_id, shopId]
+            );
+            if (!product) {
+                throw new AppError(`Product ID ${item.product_id} was not found in your shop.`, 400);
+            }
+
+            const authoritativePrice = parseFloat(product.price);
+            actualAmount += authoritativePrice * qty;
+            resolvedItems.push({
+                product_id: item.product_id,
+                quantity: qty,
+                price: authoritativePrice,
+                cost_price: product.cost_price || 0,
+            });
+        }
+
+        const clampedDiscount = Math.min(discountAmount, actualAmount);
+        const totalAmount = actualAmount - clampedDiscount;
+
+        const saleSql = 'INSERT INTO sales (shop_id, ref_no, customer_id, actual_amount, total_amount, amount_tendered, amount_change, paymode, status) VALUES (?, ?, ?, ?, ?, 0, 0, 0, 0)'; // paymode 0 = pending, status 0 = pending
+        const [saleResult] = await connection.query(saleSql, [shopId, ref_no, customer_id, actualAmount, totalAmount]);
         const saleId = saleResult.insertId;
 
-        // 3. Insert into sales_items and update product stock
-        for (const item of items) {
-            // Insert item
-            const [[product]] = await connection.query('SELECT cost_price FROM products WHERE id = ? AND shop_id = ?', [item.product_id, shopId]);
+        for (const item of resolvedItems) {
             const itemSql = 'INSERT INTO sales_items (shop_id, sale_id, product_id, quantity, price, cost_price) VALUES (?, ?, ?, ?, ?, ?)';
-            await connection.query(itemSql, [shopId, saleId, item.product_id, item.quantity, item.price, product.cost_price || 0]);
+            await connection.query(itemSql, [shopId, saleId, item.product_id, item.quantity, item.price, item.cost_price]);
 
             // Decrement stock
             const stockSql = 'UPDATE products SET stock = stock - ? WHERE id = ? AND stock >= ? AND shop_id = ?';
