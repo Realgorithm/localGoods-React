@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import api from '../api';
 import { useAuth } from '../contexts/AuthContext';
 import { motion } from 'framer-motion';
+import LoadingSpinner from '../components/LoadingSpinner';
+import PageTransition from '../components/PageTransition';
 
 const cardVariants = {
     hidden: { opacity: 0, y: 20 },
@@ -14,7 +16,7 @@ const StatCard = ({ title, value, icon, gradient }) => (
             <div className="card-body p-4 d-flex flex-column">
                 <div className="d-flex justify-content-between align-items-start">
                     <h5 className="card-title text-muted mb-1">{title}</h5>
-                    <span className={`fs-2 ${gradient} text-transparent bg-clip-text`}>
+                    <span className={`fs-2 ${gradient} text-transparent bg-clip-text stat-icon-badge`}>
                         <i className={`bi ${icon}`}></i>
                     </span>
                 </div>
@@ -59,15 +61,10 @@ const DashboardPage = () => {
     };
 
     return (
-        <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.5 }}
-        >
+        <PageTransition>
             <h1 className="mb-1 display-5 fw-bold">{user?.shopName}</h1>
             <p className="lead text-muted mb-5">Welcome, {user?.name}! Here's a glance at your shop's performance.</p>
-            {loading ? <p>Loading stats...</p> : (
+            {loading ? <LoadingSpinner label="Loading stats..." /> : (
                 <motion.div className="row" variants={containerVariants} initial="hidden" animate="visible">
                     <StatCard title="Total Sales" value={`₹${parseFloat(stats.totalSales).toFixed(2)}`} icon="bi-cash-coin" gradient="bg-gradient-green" />
                     <StatCard title="Total Profit" value={`₹${parseFloat(stats.totalProfit).toFixed(2)}`} icon="bi-graph-up-arrow" gradient="bg-gradient-cyan" />
@@ -95,7 +92,7 @@ const DashboardPage = () => {
                     </div>
                 </motion.div>
             )}
-        </motion.div>
+        </PageTransition>
     );
 };
 

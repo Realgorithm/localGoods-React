@@ -100,6 +100,86 @@ body[data-bs-theme="light"] .form-control::placeholder {
     border-color: var(--primary-glow);
 }
 
+/* --- Smooth, subtle micro-interactions app-wide --- */
+.btn {
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+}
+
+.btn-primary:hover:not(:disabled),
+.btn-success:hover:not(:disabled) {
+    box-shadow: 0 8px 20px -6px rgba(124, 58, 237, 0.55);
+}
+
+.btn:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.table-hover > tbody > tr {
+    transition: background-color 0.15s ease;
+}
+
+.nav-link {
+    transition: color 0.2s ease, background-color 0.2s ease, transform 0.15s ease;
+}
+
+.nav-pills .nav-link:hover:not(.active) {
+    transform: translateX(2px);
+}
+
+.nav-pills .nav-link.active {
+    box-shadow: 0 4px 14px -4px rgba(124, 58, 237, 0.6);
+}
+
+/* --- Stat card icon: gentle pulse on load, subtle spin-in on hover --- */
+@keyframes stat-icon-pop {
+    0% { transform: scale(0.6); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.stat-icon-badge {
+    display: inline-flex;
+    animation: stat-icon-pop 0.4s ease-out;
+}
+
+.card:hover .stat-icon-badge {
+    transform: scale(1.12) rotate(-4deg);
+    transition: transform 0.25s ease;
+}
+
+/* --- Smoother modal entrance (pop + fade instead of the default flat fade) --- */
+.modal.fade .modal-dialog {
+    transform: translateY(-24px) scale(0.96);
+    transition: transform 0.25s ease-out, opacity 0.25s ease-out;
+}
+
+.modal.show .modal-dialog {
+    transform: translateY(0) scale(1);
+}
+
+/* --- Thin gradient scrollbar for a more polished feel --- */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: var(--primary-glow) transparent;
+}
+
+*::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+*::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, var(--primary-glow), var(--secondary-glow));
+    border-radius: 4px;
+}
+
+*::-webkit-scrollbar-track {
+    background: transparent;
+}
+
 .list-group-item {
     background-color: transparent;
     border-color: var(--border-color);
@@ -222,4 +302,82 @@ body{
     width:70mm;
     page-break-inside:avoid;
 }
+}
+
+/* ==========================================================================
+   Responsiveness
+   ========================================================================== */
+
+/* Never allow a stray wide element to create horizontal scroll on the app shell */
+html, body {
+    overflow-x: hidden;
+    max-width: 100vw;
+}
+
+/* --- App sidebar / main layout (MainLayout.js) --- */
+.sidebar-desktop {
+    width: 280px;
+    min-height: 100vh;
+    background-color: rgb(15, 23, 42);
+}
+
+body[data-bs-theme="light"] .sidebar-desktop {
+    background-color: #0f172a;
+}
+
+/* Flex children (like tables) can otherwise force the layout wider than the
+   viewport instead of scrolling internally, so keep this shrinkable */
+.main-content-wrapper {
+    min-width: 0;
+}
+
+.mobile-topbar {
+    position: sticky;
+    top: 0;
+    z-index: 1020;
+    background-color: rgb(15, 23, 42);
+    border-bottom: 1px solid var(--border-color);
+}
+
+body[data-bs-theme="light"] .mobile-topbar {
+    background-color: #ffffff;
+}
+
+.sidebar-offcanvas {
+    width: 280px;
+    background-color: rgb(15, 23, 42);
+    color: var(--text-color);
+}
+
+body[data-bs-theme="light"] .sidebar-offcanvas {
+    background-color: #0f172a;
+    color: #e2e8f0;
+}
+
+.sidebar-offcanvas .btn-close {
+    filter: none;
+}
+
+/* --- Card headers with an inline search box (Products/Sales/Customers/etc pages) --- */
+@media (max-width: 767.98px) {
+    .card-header.d-flex.justify-content-between {
+        flex-wrap: wrap;
+        row-gap: 0.5rem;
+    }
+
+    .card-header.d-flex.justify-content-between .w-50 {
+        width: 100% !important;
+    }
+}
+
+/* --- Public homepage hero: less overwhelming on small screens --- */
+@media (max-width: 767.98px) {
+    .hero-section {
+        padding: 6rem 0 3.5rem;
+    }
+
+    .hero-aurora {
+        width: 700px;
+        height: 700px;
+    }
 }

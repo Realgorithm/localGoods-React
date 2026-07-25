@@ -1,85 +1,34 @@
-import React, { useState, useEffect } from 'react';
-import api from '../api';
-import { motion } from 'framer-motion';
-import { toast } from 'react-toastify';
+import React, { useState } from 'react';
+import LoadingSpinner from '../components/LoadingSpinner';
+import PageTransition from '../components/PageTransition';
 import ConfirmModal from '../components/ConfirmModal';
+import SearchCardHeader from '../components/SearchCardHeader';
+import { useCrudResource } from '../hooks/useCrudResource';
 
 function CategoriesPage() {
-    const [categories, setCategories] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [formData, setFormData] = useState({ id: '', name: '' });
-    const [isEditing, setIsEditing] = useState(false);
-    const [confirmAction, setConfirmAction] = useState(null);
+    const {
+        items: categories, loading, formData, isEditing, confirmAction,
+        setConfirmAction, handleFormChange, resetForm,
+        handleFormSubmit, handleEditClick, requestDelete,
+    } = useCrudResource('/categories', { resourceLabel: 'category', pluralLabel: 'categories', initialForm: { id: '', name: '' } });
+
     const [searchTerm, setSearchTerm] = useState('');
 
-    const fetchCategories = async () => {
-        try {
-            setLoading(true);
-            const response = await api.get('/categories');
-            setCategories(response.data);
-        } catch (err) {
-            toast.error("Failed to fetch categories.");
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        fetchCategories();
-    }, []);
-
-    const handleFormChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
-    };
-
-    const resetForm = () => {
-        setFormData({ id: '', name: '' });
-        setIsEditing(false);
-    };
-
-    const handleFormSubmit = async (e) => {
-        e.preventDefault();
-        try {
-            const response = await api.post('/categories', formData);
-            toast.success(response.data.message);
-            resetForm();
-            fetchCategories();
-        } catch (err) {
-            toast.error(err.response?.data?.message || 'Failed to save category.');
-        }
-    };
-
-    const handleEditClick = (category) => {
-        setFormData({ id: category.id, name: category.name || '' });
-        setIsEditing(true);
-    };
-
     const handleDeleteClick = (id) => {
-        setConfirmAction({
+        requestDelete(id, {
             title: 'Confirm Category Deletion',
             body: 'Are you sure you want to delete this category? Products in this category will become "Uncategorized".',
-            onConfirm: () => performDelete(id)
         });
     };
 
-    const performDelete = async (id) => {
-        try {
-            const response = await api.delete(`/categories/${id}`);
-            toast.success(response.data.message);
-            fetchCategories();
-        } catch (err) {
-            toast.error(err.response?.data?.message || 'Failed to delete category.');
-        }
-    };
-
-    if (loading) return <div className="text-center my-4">Loading categories...</div>;
+    if (loading) return <LoadingSpinner />;
 
     const filteredCategories = categories.filter(category =>
         category.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     return (
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+        <PageTransition>
             <ConfirmModal
                 show={!!confirmAction}
                 handleClose={() => setConfirmAction(null)}
@@ -110,12 +59,14 @@ function CategoriesPage() {
                 </div>
                 <div className="col-lg-8 mb-4">
                     <div className="card">
-                        <div className="card-header d-flex justify-content-between align-items-center">
-                            <h5 className="mb-0"><i className="bi bi-tags-fill me-2"></i> Category List ({filteredCategories.length})</h5>
-                            <div className="w-50">
-                                <input type="text" className="form-control form-control-sm" placeholder="Search categories..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
-                            </div>
-                        </div>
+                        <SearchCardHeader
+                            icon="bi-tags-fill"
+                            title="Category List"
+                            count={filteredCategories.length}
+                            searchTerm={searchTerm}
+                            onSearchChange={e => setSearchTerm(e.target.value)}
+                            searchPlaceholder="Search categories..."
+                        />
                         <div className="card-body">
                             <div className="table-responsive">
                                 <table className="table table-hover">
@@ -138,7 +89,7 @@ function CategoriesPage() {
                     </div>
                 </div>
             </div>
-        </motion.div>
+        </PageTransition>
     );
 }
 

@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../api';
+import LoadingSpinner from '../components/LoadingSpinner';
+import PageTransition from '../components/PageTransition';
 import { useReactToPrint } from 'react-to-print';
 import Receipt from '../components/Receipt';
 import { useAuth } from '../contexts/AuthContext';
@@ -64,12 +66,12 @@ const TransactionPage = () => {
         contentRef: componentRef,
     });
 
-    if (loading) return <div className="text-center my-4">Loading Transaction...</div>;
+    if (loading) return <LoadingSpinner />;
     if (error) return <div className="alert alert-danger">Error loading sale details.</div>;
     if (!sale) return null;
 
     return (
-        <>
+        <PageTransition>
             {/* The Receipt component must always be in the DOM for the ref to be accessible for printing. */}
             <div style={{ display: 'none' }}><Receipt ref={componentRef} sale={sale} items={items} shopName={user?.shopName} /></div>
 
@@ -115,7 +117,7 @@ const TransactionPage = () => {
                     </div>
                 </>
             )}
-        </>
+        </PageTransition>
     );
 };
 

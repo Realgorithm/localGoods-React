@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api';
+import LoadingSpinner from '../components/LoadingSpinner';
+import PageTransition from '../components/PageTransition';
+import SearchCardHeader from '../components/SearchCardHeader';
 import { useNavigate } from 'react-router-dom';
 import AddCustomerModal from '../components/AddCustomerModal';
 import ConfirmModal from '../components/ConfirmModal';
@@ -111,9 +114,8 @@ const SalesPage = () => {
         try {
             const saleData = {
                 customer_id: selectedCustomer,
-                items: cart.map(({ product_id, quantity, price }) => ({ product_id, quantity, price })),
-                actual_amount: calculateActualAmount(),
-                total_amount: calculateTotalAmount(),
+                items: cart.map(({ product_id, quantity }) => ({ product_id, quantity })),
+                discount: parseFloat(discount) || 0,
             };
             const response = await api.post('/sales', saleData);
             if (response.data.saleId) {
@@ -153,7 +155,7 @@ const SalesPage = () => {
         setSelectedCustomer(newCustomerId); // Select the newly added customer
     };
 
-    if (loading) return <div className="text-center my-4">Loading sales data...</div>;
+    if (loading) return <LoadingSpinner />;
     if (error) return <div className="alert alert-danger">Error: {error.message}</div>;
 
     const filteredSales = sales.filter(sale =>
@@ -162,7 +164,7 @@ const SalesPage = () => {
     );
 
     return (
-        <>
+        <PageTransition>
             <ConfirmModal
                 show={!!confirmAction}
                 handleClose={() => setConfirmAction(null)}
@@ -200,12 +202,14 @@ const SalesPage = () => {
                 </div>
                 <div className="col-lg-7 mb-4">
                     <div className="card h-100">
-                        <div className="card-header d-flex justify-content-between align-items-center">
-                            <h5 className="mb-0"><i className="bi bi-clock-history me-2"></i> Sales History ({filteredSales.length})</h5>
-                            <div className="w-50">
-                                <input type="text" className="form-control form-control-sm" placeholder="Search by Ref # or Customer..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
-                            </div>
-                        </div>
+                        <SearchCardHeader
+                            icon="bi-clock-history"
+                            title="Sales History"
+                            count={filteredSales.length}
+                            searchTerm={searchTerm}
+                            onSearchChange={e => setSearchTerm(e.target.value)}
+                            searchPlaceholder="Search by Ref # or Customer..."
+                        />
                         <div className="card-body">
                             <div className="table-responsive">
                                 <table className="table table-striped table-hover">
@@ -219,7 +223,7 @@ const SalesPage = () => {
                     </div>
                 </div>
             </div>
-        </>
+        </PageTransition>
     );
 };
 

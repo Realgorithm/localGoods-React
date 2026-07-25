@@ -1,75 +1,54 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { Offcanvas } from 'react-bootstrap';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 
-const Sidebar = () => {
+const NAV_ITEMS = [
+    { to: '/dashboard', icon: 'bi-grid-1x2-fill', label: 'Dashboard' },
+    { to: '/customers', icon: 'bi-people-fill', label: 'Customers' },
+    { to: '/products', icon: 'bi-box-seam-fill', label: 'Products' },
+    { to: '/categories', icon: 'bi-tags-fill', label: 'Categories' },
+    { to: '/suppliers', icon: 'bi-truck', label: 'Suppliers' },
+    { to: '/sales', icon: 'bi-cart-check-fill', label: 'Sales' },
+    { to: '/receiving', icon: 'bi-box-arrow-in-down', label: 'Receiving' },
+    { to: '/customer-payments', icon: 'bi-wallet-fill', label: 'Customer Payments' },
+    { to: '/supplier-payments', icon: 'bi-truck', label: 'Supplier Payments' },
+];
+
+const ADMIN_NAV_ITEMS = [
+    { to: '/reports', icon: 'bi-file-earmark-bar-graph-fill', label: 'Reports' },
+    { to: '/user-management', icon: 'bi-person-gear', label: 'User Management' },
+];
+
+// Shared nav content, reused by both the static desktop sidebar and the
+// mobile offcanvas drawer so the two never drift out of sync.
+const SidebarNav = ({ onNavigate }) => {
     const { user, logout } = useAuth();
     const { theme, toggleTheme } = useTheme();
 
     return (
-        <motion.div className="d-flex flex-column flex-shrink-0 p-3" style={{ width: '280px', minHeight: '100vh' }} initial={{ x: -280 }} animate={{ x: 0 }} transition={{ duration: 0.5 }}>
-            <NavLink to="/dashboard" className="d-flex align-items-center mb-3 mb-md-0 me-md-auto link-dark text-decoration-none">
-                <span className="fs-4 text-white">{user?.shopName || 'LocalGoods'}</span>
+        <div className="d-flex flex-column h-100">
+            <NavLink to="/dashboard" onClick={onNavigate} className="d-flex align-items-center mb-3 text-decoration-none">
+                <span className="fs-4 text-white text-truncate">{user?.shopName || 'LocalGoods'}</span>
             </NavLink>
             <hr />
             <ul className="nav nav-pills flex-column mb-auto">
-                <li className="nav-item">
-                    <NavLink to="/dashboard" className="nav-link" aria-current="page">
-                        <i className="bi bi-grid-1x2-fill me-2"></i> Dashboard
-                    </NavLink>
-                </li>
-                <li>
-                    <NavLink to="/customers" className="nav-link">
-                        <i className="bi bi-people-fill me-2"></i> Customers
-                    </NavLink>
-                </li>
-                <li>
-                    <NavLink to="/products" className="nav-link">
-                        <i className="bi bi-box-seam-fill me-2"></i> Products
-                    </NavLink>
-                </li>
-                <li>
-                    <NavLink to="/categories" className="nav-link">
-                        <i className="bi bi-tags-fill me-2"></i> Categories
-                    </NavLink>
-                </li>
-                <li>
-                    <NavLink to="/suppliers" className="nav-link">
-                        <i className="bi bi-truck me-2"></i> Suppliers
-                    </NavLink>
-                </li>
-                <li>
-                    <NavLink to="/sales" className="nav-link">
-                        <i className="bi bi-cart-check-fill me-2"></i> Sales
-                    </NavLink>
-                </li>
-                <li>
-                    <NavLink to="/receiving" className="nav-link">
-                        <i className="bi bi-box-arrow-in-down me-2"></i> Receiving
-                    </NavLink>
-                </li>
-                <li>
-                    <NavLink to="/customer-payments" className="nav-link">
-                        <i className="bi bi-wallet-fill me-2"></i> Customer Payments
-                    </NavLink>
-                </li>
-                <li>
-                    <NavLink to="/supplier-payments" className="nav-link">
-                        <i className="bi bi-truck me-2"></i> Supplier Payments
-                    </NavLink>
-                </li>
-                {user?.role === 'admin' && (
-                    <li>
-                        <NavLink to="/reports" className="nav-link"><i className="bi bi-file-earmark-bar-graph-fill me-2"></i> Reports</NavLink>
+                {NAV_ITEMS.map(item => (
+                    <li className="nav-item" key={item.to}>
+                        <NavLink to={item.to} onClick={onNavigate} className="nav-link">
+                            <i className={`bi ${item.icon} me-2`}></i> {item.label}
+                        </NavLink>
                     </li>
-                )}
-                {user?.role === 'admin' && (
-                    <li>
-                        <NavLink to="/user-management" className="nav-link"><i className="bi bi-person-gear me-2"></i> User Management</NavLink>
+                ))}
+                {user?.role === 'admin' && ADMIN_NAV_ITEMS.map(item => (
+                    <li key={item.to}>
+                        <NavLink to={item.to} onClick={onNavigate} className="nav-link">
+                            <i className={`bi ${item.icon} me-2`}></i> {item.label}
+                        </NavLink>
                     </li>
-                )}
+                ))}
             </ul>
             <hr />
             <div className="mt-auto">
@@ -79,8 +58,32 @@ const Sidebar = () => {
                 </button>
                 <button className="btn btn-danger w-100" onClick={logout}>Logout</button>
             </div>
-        </motion.div>
+        </div>
     );
 };
+
+// Static sidebar, visible on large screens and up only.
+const Sidebar = () => (
+    <motion.div
+        className="d-none d-lg-flex flex-column flex-shrink-0 p-3 sidebar-desktop"
+        initial={{ x: -280 }}
+        animate={{ x: 0 }}
+        transition={{ duration: 0.5 }}
+    >
+        <SidebarNav />
+    </motion.div>
+);
+
+// Slide-in drawer used below the lg breakpoint. Controlled by MainLayout.
+export const MobileSidebar = ({ show, onHide }) => (
+    <Offcanvas show={show} onHide={onHide} placement="start" className="sidebar-offcanvas d-lg-none">
+        <Offcanvas.Header closeButton closeVariant="white">
+            <Offcanvas.Title>Menu</Offcanvas.Title>
+        </Offcanvas.Header>
+        <Offcanvas.Body className="d-flex flex-column pt-0">
+            <SidebarNav onNavigate={onHide} />
+        </Offcanvas.Body>
+    </Offcanvas>
+);
 
 export default Sidebar;

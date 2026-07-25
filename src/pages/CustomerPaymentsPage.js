@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api';
+import LoadingSpinner from '../components/LoadingSpinner';
+import PageTransition from '../components/PageTransition';
+import SearchCardHeader from '../components/SearchCardHeader';
 import { toast } from 'react-toastify';
 
 const CustomerPaymentsPage = () => {
@@ -54,7 +57,7 @@ const CustomerPaymentsPage = () => {
         }
     };
 
-    if (loading) return <div className="text-center my-4">Loading data...</div>;
+    if (loading) return <LoadingSpinner />;
     if (error) return <div className="alert alert-danger">Error: {error.message}</div>;
 
     const filteredPayments = payments.filter(p =>
@@ -62,7 +65,7 @@ const CustomerPaymentsPage = () => {
     );
 
     return (
-        <div className="fade-in">
+        <PageTransition>
             <h1 className="mb-4">Customer Payments</h1>
             <div className="row">
                 <div className="col-lg-5 mb-4">
@@ -92,12 +95,14 @@ const CustomerPaymentsPage = () => {
                 </div>
                 <div className="col-lg-7 mb-4">
                     <div className="card h-100">
-                        <div className="card-header d-flex justify-content-between align-items-center">
-                            <h5 className="mb-0"><i className="bi bi-clock-history me-2"></i> Recent Payments ({filteredPayments.length})</h5>
-                            <div className="w-50">
-                                <input type="text" className="form-control form-control-sm" placeholder="Search payments..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
-                            </div>
-                        </div>
+                        <SearchCardHeader
+                            icon="bi-clock-history"
+                            title="Recent Payments"
+                            count={filteredPayments.length}
+                            searchTerm={searchTerm}
+                            onSearchChange={e => setSearchTerm(e.target.value)}
+                            searchPlaceholder="Search payments..."
+                        />
                         <div className="card-body">
                             <div className="table-responsive">
                                 <table className="table table-striped table-hover">
@@ -112,7 +117,7 @@ const CustomerPaymentsPage = () => {
                     </div>
                 </div>
             </div>
-        </div>
+        </PageTransition>
     );
 };
 

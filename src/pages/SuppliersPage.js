@@ -1,91 +1,23 @@
-import React, { useState, useEffect } from 'react';
-import api from '../api';
-import { motion } from 'framer-motion';
-import { toast } from 'react-toastify';
+import React, { useState } from 'react';
+import LoadingSpinner from '../components/LoadingSpinner';
+import PageTransition from '../components/PageTransition';
 import ConfirmModal from '../components/ConfirmModal';
+import SearchCardHeader from '../components/SearchCardHeader';
+import BalanceStatusBadge from '../components/BalanceStatusBadge';
+import { useCrudResource } from '../hooks/useCrudResource';
 
-const SupplierStatusBadge = ({ balance }) => {
-    const hasDues = parseFloat(balance) > 0;
-    if (hasDues) {
-        return <span className="badge bg-danger">Owed Money</span>;
-    }
-    return <span className="badge bg-success">All Clear</span>;
-};
+const SUPPLIER_INITIAL_FORM = { id: '', name: '', contact: '', address: '' };
 
 function SuppliersPage() {
-    const [suppliers, setSuppliers] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [formData, setFormData] = useState({ id: '', name: '', contact: '', address: '' });
-    const [isEditing, setIsEditing] = useState(false);
+    const {
+        items: suppliers, loading, formData, isEditing, confirmAction,
+        setConfirmAction, handleFormChange, resetForm,
+        handleFormSubmit, handleEditClick, requestDelete,
+    } = useCrudResource('/suppliers', { resourceLabel: 'supplier', initialForm: SUPPLIER_INITIAL_FORM });
+
     const [searchTerm, setSearchTerm] = useState('');
-    const [confirmAction, setConfirmAction] = useState(null);
 
-    const fetchSuppliers = async () => {
-        try {
-            setLoading(true);
-            const response = await api.get('/suppliers');
-            setSuppliers(response.data);
-        } catch (err) {
-            toast.error("Failed to fetch suppliers.");
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        fetchSuppliers();
-    }, []);
-
-    const handleFormChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
-    };
-
-    const resetForm = () => {
-        setFormData({ id: '', name: '', contact: '', address: '' });
-        setIsEditing(false);
-    };
-
-    const handleFormSubmit = async (e) => {
-        e.preventDefault();
-        try {
-            const response = await api.post('/suppliers', formData);
-            toast.success(response.data.message);
-            resetForm();
-            fetchSuppliers();
-        } catch (err) {
-            toast.error(err.response?.data?.message || 'Failed to save supplier.');
-        }
-    };
-
-    const handleEditClick = (supplier) => {
-        setFormData({
-            id: supplier.id,
-            name: supplier.name || '',
-            contact: supplier.contact || '',
-            address: supplier.address || '',
-        });
-        setIsEditing(true);
-    };
-
-    const handleDeleteClick = (id) => {
-        setConfirmAction({
-            title: 'Confirm Supplier Deletion',
-            body: 'Are you sure you want to delete this supplier? This action cannot be undone.',
-            onConfirm: () => performDelete(id)
-        });
-    };
-
-    const performDelete = async (id) => {
-        try {
-            const response = await api.delete(`/suppliers/${id}`);
-            toast.success(response.data.message);
-            fetchSuppliers();
-        } catch (err) {
-            toast.error(err.response?.data?.message || 'Failed to delete supplier.');
-        }
-    };
-
-    if (loading) return <div className="text-center my-4">Loading suppliers...</div>;
+    if (loading) return <LoadingSpinner />;
 
     const filteredSuppliers = suppliers.filter(supplier =>
         supplier.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -94,7 +26,7 @@ function SuppliersPage() {
     );
 
     return (
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+        <PageTransition>
             <ConfirmModal
                 show={!!confirmAction}
                 handleClose={() => setConfirmAction(null)}
@@ -133,12 +65,14 @@ function SuppliersPage() {
                 </div>
                 <div className="col-lg-8 mb-4">
                     <div className="card">
-                        <div className="card-header d-flex justify-content-between align-items-center">
-                            <h5 className="mb-0"><i className="bi bi-list-ul me-2"></i> Supplier List ({filteredSuppliers.length})</h5>
-                            <div className="w-50">
-                                <input type="text" className="form-control form-control-sm" placeholder="Search suppliers..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
-                            </div>
-                        </div>
+                        <SearchCardHeader
+                            icon="bi-list-ul"
+                            title="Supplier List"
+                            count={filteredSuppliers.length}
+                            searchTerm={searchTerm}
+                            onSearchChange={e => setSearchTerm(e.target.value)}
+                            searchPlaceholder="Search suppliers..."
+                        />
                         <div className="card-body">
                             <div className="table-responsive">
                                 <table className="table table-hover">
@@ -163,10 +97,10 @@ function SuppliersPage() {
                                                         ₹{parseFloat(supplier.balance).toFixed(2)}
                                                     </span>
                                                 </td>
-                                                <td><SupplierStatusBadge balance={supplier.balance} /></td>
+                                                <td><BalanceStatusBadge balance={supplier.balance} dueLabel="Owed Money" clearLabel="All Clear" dueVariant="danger" /></td>
                                                 <td>
                                                     <button className="btn btn-sm btn-outline-primary me-2" onClick={() => handleEditClick(supplier)}>Edit</button>
-                                                    <button className="btn btn-sm btn-outline-danger" onClick={() => handleDeleteClick(supplier.id)}>Delete</button>
+                                                    <button className="btn btn-sm btn-outline-danger" onClick={() => requestDelete(supplier.id, { title: 'Confirm Supplier Deletion', body: 'Are you sure you want to delete this supplier? This action cannot be undone.' })}>Delete</button>
                                                 </td>
                                             </tr>
                                         ))}
@@ -178,7 +112,7 @@ function SuppliersPage() {
                     </div>
                 </div>
             </div>
-        </motion.div>
+        </PageTransition>
     );
 }
 

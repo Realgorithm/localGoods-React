@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api';
+import LoadingSpinner from '../components/LoadingSpinner';
 import { motion } from 'framer-motion';
 import UserFormModal from '../components/UserFormModal';
 import ConfirmModal from '../components/ConfirmModal';
@@ -84,7 +85,7 @@ const UserManagementPage = () => {
         }
     };
 
-    if (loading) return <div className="text-center my-5">Loading users...</div>;
+    if (loading) return <LoadingSpinner />;
     if (error) return <div className="alert alert-danger">{error}</div>;
 
     return (

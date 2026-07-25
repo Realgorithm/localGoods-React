@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api';
-import { motion } from 'framer-motion';
+import LoadingSpinner from '../components/LoadingSpinner';
+import PageTransition from '../components/PageTransition';
+import SearchCardHeader from '../components/SearchCardHeader';
 import { toast } from 'react-toastify';
 import ConfirmModal from '../components/ConfirmModal';
 import Barcode from 'react-barcode';
@@ -101,7 +103,7 @@ const ProductsPage = () => {
         }
     };
 
-    if (loading) return <div className="text-center my-4">Loading products...</div>;
+    if (loading) return <LoadingSpinner />;
     if (error) return <div className="alert alert-danger">Error: {error.message}</div>;
 
     const filteredProducts = products.filter(product =>
@@ -111,7 +113,7 @@ const ProductsPage = () => {
     );
 
     return (
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+        <PageTransition>
             <ConfirmModal
                 show={!!confirmAction}
                 handleClose={() => setConfirmAction(null)}
@@ -172,12 +174,14 @@ const ProductsPage = () => {
                 </div>
                 <div className="col-lg-8 mb-4">
                     <div className="card">
-                        <div className="card-header d-flex justify-content-between align-items-center">
-                            <h5 className="mb-0"><i className="bi bi-list-ul me-2"></i> Product List ({filteredProducts.length})</h5>
-                            <div className="w-50">
-                                <input type="text" className="form-control form-control-sm" placeholder="Search by name, SKU, or category..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
-                            </div>
-                        </div>
+                        <SearchCardHeader
+                            icon="bi-list-ul"
+                            title="Product List"
+                            count={filteredProducts.length}
+                            searchTerm={searchTerm}
+                            onSearchChange={e => setSearchTerm(e.target.value)}
+                            searchPlaceholder="Search by name, SKU, or category..."
+                        />
                         <div className="card-body">
                             <div className="table-responsive">
                                 <table className="table table-striped table-hover">
@@ -225,7 +229,7 @@ const ProductsPage = () => {
                     </div>
                 </div>
             </div>
-        </motion.div>
+        </PageTransition>
     );
 };
 
