@@ -1,134 +1,166 @@
-# LocalGoods POS & Inventory Management System
+# LocalGoods — POS & Inventory Management System
 
-A modern, full-stack web application designed to help small businesses manage sales, inventory, customers, and suppliers efficiently. Built with React for the frontend and Node.js/Express for the backend.
+A full-stack point-of-sale and inventory management app for small local businesses — sales, stock, customers, suppliers, payments, and reporting in one dashboard. React on the frontend, Node/Express + MySQL on the backend.
+
+🔗 **Live app:** [localgoods.netlify.app](https://localgoods.netlify.app/)
+
+---
 
 ## ✨ Features
 
-- **Authentication**: Secure user login, registration, and session management using JWT.
-- **Role-Based Access**: Admin and User roles with different permissions.
-- **Dashboard**: An at-a-glance overview of key business metrics like total sales, profit, stock levels, and credit balances.
-- **Sales Management**: A complete point-of-sale interface to create new sales, a transaction screen to handle payments, and a searchable history of all sales with payment status (Paid, Partial, Unpaid).
-- **Product Management**: Full CRUD (Create, Read, Update, Delete) functionality for products, including stock tracking, pricing, and a searchable product list with stock status indicators (In Stock, Low Stock, Out of Stock).
-- **Barcode Support**: Generate and print barcodes for products based on their SKU. Scan barcodes on the sales page to quickly add items to the cart.
-- **Product Categories**: Create and manage categories to organize products efficiently.
-- **Customer Management**: Manage a customer database with contact details and track outstanding credit balances. Includes search and status badges.
-- **Supplier Management**: Manage a list of suppliers, track purchase orders, and monitor outstanding balances owed to them.
-- **Inventory & Purchases**: Record new stock arrivals (purchases), update inventory levels and cost prices automatically, and maintain a searchable history of all purchase orders.
-- **Payments Hub**: Dedicated sections to record payments received from customers and payments made to suppliers, automatically updating their respective balances.
-- **Reporting**: Generate detailed sales and profit reports for custom date ranges, visualize data with charts, and export reports to CSV.
-- **Modern UI/UX**: A responsive, user-friendly interface built with Bootstrap, featuring dark/light mode, smooth animations, and non-blocking toast notifications.
+- **Authentication & Access Control** — JWT-based login/registration with httpOnly cookies, and Admin vs. User roles with route-level permission checks.
+- **Dashboard** — At-a-glance totals for sales, profit, stock levels, and outstanding credit, with low-stock alerts.
+- **Sales / POS** — Cart-style sale creation, a dedicated checkout screen for tendering payment and change, and a searchable sales history with payment status.
+- **Product Management** — Full CRUD with stock and pricing, low/out-of-stock indicators, and barcode generation + scan-to-cart support.
+- **Categories, Customers & Suppliers** — Simple CRUD management for each, with search and outstanding-balance status badges.
+- **Purchasing** — Record stock received from suppliers; inventory levels and average cost price update automatically.
+- **Payments Hub** — Record payments received from customers and payments made to suppliers, updating balances automatically.
+- **Reporting** — Sales/profit reports over a custom date range, with charts and CSV export.
+- **Responsive UI** — Usable end-to-end on mobile: a collapsible sidebar drawer, a collapsing public nav, and layouts that adapt down to phone widths.
+- **Polished UX** — Dark/light mode, page transitions, toast notifications, and an app-wide error boundary so a single page crash doesn't take down the whole session.
 
 ## 🚀 Tech Stack
 
-- **Frontend**:
-  - React.js
-  - React Router for navigation
-  - Axios for API communication
-  - Bootstrap & React-Bootstrap for styling
-  - Recharts for data visualization
-  - Framer Motion for animations
-  - React Toastify for notifications
-- **Backend**:
-  - Node.js & Express.js
-  - MySQL2 for database interaction
-  - JSON Web Tokens (JWT) for secure authentication
-  - bcryptjs for password hashing
-  - Helmet for security headers
-  - Express Rate Limit for brute-force protection
+**Frontend**
+- React (Create React App) + React Router
+- Axios for API communication
+- Bootstrap & React-Bootstrap (Offcanvas, Navbar, Modal)
+- Framer Motion for animation
+- Recharts for reporting charts
+- React Toastify for notifications
+
+**Backend**
+- Node.js & Express
+- MySQL (via `mysql2`)
+- JWT for authentication, `bcryptjs` for password hashing
+- Helmet for security headers, `express-rate-limit` for brute-force/DoS protection
 
 ## 📂 Project Structure
 
 ```
 /
-├── server/         # Backend Node.js/Express application
-│   ├── db.js       # Database connection logic
-│   └── index.js    # Main server file with all API routes
-├── src/            # Frontend React application
-│   ├── api/        # Axios instance configuration
-│   ├── components/ # Reusable React components (Modals, Navbar, etc.)
-│   ├── contexts/   # React Context providers (Auth, Theme)
-│   ├── pages/      # Page components for each route
-│   └── App.js      # Main application component with routing
-├── .env            # Environment variables (NEVER commit this file)
-└── package.json    # Project dependencies and scripts
+├── server/                # Backend Express application
+│   ├── db.mjs               # MySQL connection pool
+│   ├── utils.mjs             # Shared error handling + validation helpers
+│   ├── schema.mjs            # Database schema reference
+│   └── index.mjs             # App setup, middleware, and all API routes
+├── src/                   # Frontend React application
+│   ├── api.js               # Configured Axios instance
+│   ├── components/          # Reusable UI (modals, sidebar, badges, spinners...)
+│   ├── contexts/            # React Context providers (Auth, Theme)
+│   ├── hooks/                # Shared data hooks (e.g. useCrudResource)
+│   ├── layouts/              # Route-level layouts (public site vs. app shell)
+│   ├── pages/                # One component per route
+│   ├── styles/                # Global CSS
+│   └── App.js                # Routing + top-level providers
+├── public/                # Static assets and index.html
+├── netlify.toml            # Netlify build config (frontend)
+└── package.json             # Scripts and dependencies for both frontend and backend
 ```
 
-## ⚙️ Local Setup & Installation
-
-Follow these steps to get the project running on your local machine.
+## ⚙️ Local Setup
 
 ### Prerequisites
+- Node.js v18+ (the backend uses `.mjs` files for native ES modules — no special `package.json` config needed)
+- A MySQL-compatible database (MySQL or MariaDB)
 
-- Node.js (v16 or later)
-- MySQL or a compatible database (like MariaDB).
-
-### 1. Clone the Repository
-
-```bash
-git clone https://github.com/your-username/your-repository-name.git
-cd your-repository-name
-```
-
-### 2. Install Dependencies
-
-Install both frontend and backend dependencies from the root directory.
+### 1. Clone and install
 
 ```bash
+git clone https://github.com/Realgorithm/localGoods-React.git
+cd localGoods-React
 npm install
 ```
 
-### 3. Database Setup
+This installs both the frontend and backend dependencies from the single root `package.json`.
 
-1.  Create a new database in your MySQL instance named `elbaf`. The backend defaults to this name for development.
-2.  Run the necessary SQL queries to create all the required tables (`users`, `products`, `customers`, `suppliers`, `sales`, etc.).
+### 2. Set up the database
 
-### 4. Environment Variables
+Create a local database and import the schema (see `server/schema.mjs` for the table definitions), then point the backend at it with the environment variables below.
 
-Create a `.env` file in the project root. Use the structure below and fill in your details.
+### 3. Configure environment variables
+
+Create a `.env` file in the project root:
 
 ```env
-# Frontend Configuration
-PORT=3000
+# Frontend — REACT_APP_API_URL points the React app at your local API
 REACT_APP_API_URL=http://localhost:3001/api
 
-# Backend Configuration
-BACKEND_PORT=3001
+# Backend
+PORT=3001
+FRONTEND_URL=http://localhost:3000
 
-# Local Database Configuration (not used on Railway)
+# Local database (ignored if DATABASE_URL is set — see Deployment below)
 DB_HOST=localhost
 DB_USER=root
 DB_PASSWORD=your_mysql_password
-DB_DATABASE=elbaf
+DB_DATABASE=shop_management
 
-# Security
-JWT_SECRET=generate-a-super-long-and-random-secret-key
+# Auth
+JWT_SECRET=generate-a-long-random-secret-key
 JWT_COOKIE_EXPIRES_IN=1d
 ```
 
-**Important**: Your local database credentials are set directly in `server/db.js`. You may need to edit this file to match your local MySQL `user` and `password`.
+> Both the React dev server and the backend read `process.env.PORT`, so don't set `PORT` for the frontend in this shared file — it would collide with the backend's port. Leaving it unset lets Create React App default to `3000` on its own.
 
-### 5. Run the Application
-
-Use the `dev` script to run both the frontend and backend servers concurrently.
+### 4. Run it
 
 ```bash
 npm run dev
 ```
 
-- The React frontend will be available at `http://localhost:3000`.
-- The Node.js backend will be running at `http://localhost:3001`.
+This runs the React dev server and the API concurrently:
+- Frontend: `http://localhost:3000`
+- Backend: `http://localhost:3001`
+
+Other useful scripts:
+
+| Script | What it does |
+|---|---|
+| `npm run client` | Frontend only (`react-scripts start`) |
+| `npm run server` | Backend only, with auto-restart (`nodemon`) |
+| `npm run build` | Production frontend build |
+| `npm start` | Runs the backend with plain `node` (used in production) |
 
 ## ☁️ Deployment
 
-The application is configured for easy deployment to modern cloud platforms:
+This project is deployed as two independently-hosted pieces:
 
-- **Backend (Node.js)**: Can be deployed to services like Render or Heroku.
-- **Frontend (React)**: Can be deployed as a static site to services like Netlify or Vercel.
-- **Database**: A cloud-based MySQL provider like PlanetScale or AWS RDS is recommended for production.
+- **Frontend → [Netlify](https://www.netlify.com/)**, built from `npm run build`, configured via `netlify.toml`. Needs `REACT_APP_API_URL` set to the deployed API's URL.
+- **Backend + Database → [Railway](https://railway.app/)**, running `npm start`. Railway's MySQL plugin provides a `DATABASE_URL` automatically, which `server/db.mjs` picks up in place of the individual `DB_*` variables.
 
-Remember to set the `DATABASE_URL`, `FRONTEND_URL`, and `JWT_SECRET` environment variables in your production environment.
+Required environment variables in production (backend):
+
+| Variable | Purpose |
+|---|---|
+| `DATABASE_URL` | Full MySQL connection string (Railway sets this automatically if you attach its MySQL plugin) |
+| `FRONTEND_URL` | Your deployed frontend origin (e.g. `https://localgoods.netlify.app`) — required for CORS to allow it |
+| `JWT_SECRET` | Long, random signing secret for auth tokens |
+| `JWT_COOKIE_EXPIRES_IN` | Token/cookie lifetime, e.g. `1d` |
+| `NODE_ENV` | Set to `production` so cookies are issued as `Secure`/`SameSite=None` correctly |
+
+**Deploy order matters occasionally:** frontend and backend build independently from the same push. Most changes are backward-compatible either direction, but if a change alters the shape of a request/response between them (as noted in a given commit), push the backend first and confirm it's healthy before the frontend rollout finishes.
+
+## 🔒 Security Notes
+
+- Passwords are hashed with `bcryptjs`; sessions use short-lived, httpOnly, signed JWT cookies.
+- All data-changing routes are scoped to the authenticated user's shop (`shop_id`) at the query level — one shop can never read or modify another's data.
+- All SQL is parameterized (no string-built queries).
+- Line-item prices for sales are always resolved server-side from the database, never trusted from the client.
+- `express-rate-limit` throttles auth endpoints and the API as a whole; `helmet` sets standard security headers.
+- The `/health` endpoint intentionally returns no schema or environment details — just an up/down status.
 
 ## 🎨 Future Enhancements
 
-- **Tax Management (GST)**: Configure tax rates and apply them to sales.
-- **Expense Tracking**: Record general business expenses to calculate true net profit.
+- **Tax management (GST)** — configurable tax rates applied at the point of sale.
+- **Expense tracking** — record general business expenses to calculate true net profit.
+- **Automated tests** — no test suite exists yet; would be worth adding before this handles a growing volume of real transactions.
+
+## 👤 Author
+
+**Tabish Hussain**
+[GitHub](https://github.com/Realgorithm)
+
+## 📄 License
+
+No license has been chosen for this project yet — all rights are reserved by default until one is added.

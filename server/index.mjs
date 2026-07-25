@@ -3,14 +3,14 @@ import express from 'express';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { pool } from './db.js';
+import { pool } from './db.mjs';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
-import { asyncHandler, AppError, isValidEmail, isValidPassword, ttlToMs } from './utils.js';
+import { asyncHandler, AppError, isValidEmail, isValidPassword, ttlToMs } from './utils.mjs';
 
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
