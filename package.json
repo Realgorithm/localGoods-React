@@ -25,7 +25,7 @@
     "react-bootstrap": "^2.10.10",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.23.1",
-    "react-scripts": "5.0.1",
+    "react-scripts": "^0.0.0",
     "react-to-print": "^3.3.0",
     "react-toastify": "^11.1.0",
     "recharts": "^3.9.1",
