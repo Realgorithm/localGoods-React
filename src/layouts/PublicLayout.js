@@ -55,7 +55,13 @@ const PublicLayout = () => {
                         </div>
                     </div>
                     <hr />
-                    <p className="text-center text-muted">&copy; {new Date().getFullYear()} LocalGoods-Tracker. All Rights Reserved.</p>
+                    <p className="text-center text-muted mb-1">&copy; {new Date().getFullYear()} LocalGoods-Tracker. All Rights Reserved.</p>
+                    <p className="text-center text-muted small mb-0">
+                        Built by{' '}
+                            <a href="https://github.com/Realgorithm" target="_blank" rel="noopener noreferrer" className="text-muted">
+                                    Tabish Hussain
+                                        </a>
+                                        </p>
                 </div>
             </footer>
         </div>

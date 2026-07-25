@@ -56,8 +56,14 @@ const SidebarNav = ({ onNavigate }) => {
                     <i className={`bi ${theme === 'light' ? 'bi-moon-stars-fill' : 'bi-sun-fill'} me-2`}></i>
                     Switch to {theme === 'light' ? 'Dark' : 'Light'} Mode
                 </button>
-                <button className="btn btn-danger w-100" onClick={logout}>Logout</button>
-            </div>
+                
+            </div><button className="btn btn-danger w-100" onClick={logout}>Logout</button>
+<p className="text-center text-muted small mt-3 mb-0">
+    Built by{' '}
+    <a href="https://github.com/Realgorithm" target="_blank" rel="noopener noreferrer" className="text-white-50">
+        Tabish Hussain
+    </a>
+</p>
         </div>
     );
 };
@@ -78,7 +84,7 @@ const Sidebar = () => (
 export const MobileSidebar = ({ show, onHide }) => (
     <Offcanvas show={show} onHide={onHide} placement="start" className="sidebar-offcanvas d-lg-none">
         <Offcanvas.Header closeButton closeVariant="white">
-            <Offcanvas.Title>Menu</Offcanvas.Title>
+            <Offcanvas.Title>LocalGoods</Offcanvas.Title>
         </Offcanvas.Header>
         <Offcanvas.Body className="d-flex flex-column pt-0">
             <SidebarNav onNavigate={onHide} />
