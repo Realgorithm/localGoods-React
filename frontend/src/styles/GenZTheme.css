@@ -52,15 +52,25 @@ body[data-bs-theme="light"] .text-white {
 }
 
 body[data-bs-theme="light"] .card {
-    background: #81c2e0;
-    border: 1px solid var(--border-color);
-    box-shadow: 0 1px 3px 0 rgba(0,0,0,0.05);
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.06), 0 1px 2px -1px rgba(15, 23, 42, 0.06);
     backdrop-filter: none;
+}
+
+body[data-bs-theme="light"] .card:hover {
+    background: #ffffff;
+    box-shadow: 0 12px 24px -8px rgba(15, 23, 42, 0.12), 0 4px 8px -4px rgba(15, 23, 42, 0.08);
 }
 
 .card-header {
     background-color: rgba(var(--card-bg-rgb), 0.05);
     border-bottom: 1px solid var(--border-color);    
+}
+
+body[data-bs-theme="light"] .card-header {
+    background-color: rgba(15, 23, 42, 0.025);
+    border-bottom: 1px solid #e2e8f0;
 }
 
 .form-control, .form-select {
@@ -192,7 +202,7 @@ body[data-bs-theme="light"] .list-group-item {
 }
 
 .nav-pills .nav-link {
-    color: var(--text-muted-color);
+    color: #94a3b8;
     transition: color 0.2s ease, background-color 0.2s ease;
 }
 
@@ -202,12 +212,8 @@ body[data-bs-theme="light"] .list-group-item {
 }
 
 .nav-pills .nav-link:hover:not(.active) {
-    color: var(--text-color);
-}
-
-body[data-bs-theme="light"] .nav-pills .nav-link:hover:not(.active) {
-    background-color: #e2e8f0;
-    color: #0f172a;
+    color: #f1f5f9;
+    background-color: rgba(255, 255, 255, 0.08);
 }
 
 /* For StatCard Icons */
@@ -337,10 +343,25 @@ body[data-bs-theme="light"] .sidebar-desktop {
     z-index: 1020;
     background-color: rgb(15, 23, 42);
     border-bottom: 1px solid var(--border-color);
+    color: #e2e8f0;
 }
 
+.mobile-topbar .btn-outline-secondary {
+    color: #cbd5e1;
+    border-color: #475569;
+}
+
+.mobile-topbar .btn-outline-secondary:hover {
+    color: #0f172a;
+    background-color: #e2e8f0;
+    border-color: #e2e8f0;
+}
+
+/* The drawer this topbar opens is always dark too, so keep the topbar
+   dark in both themes instead of flipping to white — otherwise tapping
+   the menu button feels like jumping into a different app skin. */
 body[data-bs-theme="light"] .mobile-topbar {
-    background-color: #ffffff;
+    background-color: rgb(15, 23, 42);
 }
 
 .sidebar-offcanvas {
