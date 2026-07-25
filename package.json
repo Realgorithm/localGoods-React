@@ -1,65 +1,15 @@
 {
-  "name": "localgoods-tracker-react-frontend",
-  "version": "0.1.0",
+  "name": "localgoods-tracker",
+  "version": "1.0.0",
   "private": true,
-  "dependencies": {
-    "@testing-library/jest-dom": "^5.17.0",
-    "@testing-library/react": "^13.4.0",
-    "@testing-library/user-event": "^13.5.0",
-    "axios": "^1.7.2",
-    "bcryptjs": "^3.0.3",
-    "bootstrap": "^5.3.8",
-    "cookie-parser": "^1.4.7",
-    "cors": "^2.8.5",
-    "dotenv": "^17.4.2",
-    "express": "^4.19.2",
-    "express-rate-limit": "^8.5.2",
-    "express-validator": "^7.3.2",
-    "framer-motion": "^12.42.2",
-    "helmet": "^8.2.0",
-    "jsonwebtoken": "^9.0.3",
-    "mysql2": "^3.10.0",
-    "papaparse": "^5.5.4",
-    "react": "^18.3.1",
-    "react-barcode": "^1.6.1",
-    "react-bootstrap": "^2.10.10",
-    "react-dom": "^18.3.1",
-    "react-router-dom": "^6.23.1",
-    "react-scripts": "^5.0.1",
-    "react-to-print": "^3.3.0",
-    "react-toastify": "^11.1.0",
-    "recharts": "^3.9.1",
-    "web-vitals": "^2.1.4"
-  },
-  "devDependencies": {
-    "concurrently": "^8.2.2",
-    "nodemon": "^3.1.2"
-  },
+  "description": "Root-level convenience scripts only. Not deployed — Netlify builds from /frontend, Railway builds from /backend.",
   "scripts": {
-    "start": "node server/index.mjs",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject",
-    "server": "nodemon server/index.mjs",
-    "client": "react-scripts start",
+    "install:all": "npm install --prefix frontend && npm install --prefix backend",
+    "client": "npm run start --prefix frontend",
+    "server": "npm run dev --prefix backend",
     "dev": "concurrently \"npm:server\" \"npm:client\""
   },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
-  },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
+  "devDependencies": {
+    "concurrently": "^8.2.2"
   }
 }
