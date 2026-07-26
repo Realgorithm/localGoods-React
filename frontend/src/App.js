@@ -8,6 +8,7 @@ import MainLayout from './layouts/MainLayout';
 import RoleProtectedRoute from './components/RoleProtectedRoute';
 import PublicLayout from './layouts/PublicLayout';
 import ErrorBoundary from './components/ErrorBoundary';
+import LoadingSpinner from './components/LoadingSpinner';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -36,24 +37,25 @@ const CustomerPaymentsPage = lazy(() => import('./pages/CustomerPaymentsPage'));
 
 const CategoriesPage = lazy(() => import('./pages/CategoriesPage'));
 // A simple fallback component to show while pages are loading.
+/*
 const LoadingFallback = () => (
   <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: 'rgb(15, 23, 42)' }}>
     <span style={{ color: '#e2e8f0', fontFamily: 'Inter, sans-serif' }}>Loading...</span>
   </div>
 );
-
+*/
 const AppContent = () => {
   const location = useLocation();
   const { theme } = useTheme();
   const { loading } = useAuth();
 
   if (loading) {
-    return <LoadingFallback />;
+    return <LoadingSpinner/>;
   }
 
   return (
     <>
-      <Suspense fallback={<LoadingFallback />}>
+      <Suspense fallback={<LoadingSpinner />}>
         <AnimatePresence mode="wait">
           <Routes location={location} key={location.pathname}>
             {/* Public routes with shared layout */}

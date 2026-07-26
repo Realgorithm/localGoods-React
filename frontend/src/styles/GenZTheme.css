@@ -222,7 +222,7 @@ body[data-bs-theme="light"] .nav-pills .nav-link:hover:not(.active) {
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    text-fill-color: transparent;
+    text-emphasis-color: transparent;
 }
 
 .bg-clip-text {
