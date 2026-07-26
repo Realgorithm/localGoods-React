@@ -9,6 +9,13 @@
     --text-color: #e2e8f0;
     --text-muted-color: #94a3b8;
     --border-color: rgba(255, 255, 255, 0.1);
+
+    /* Sidebar / mobile topbar surface — dark, rich navy in dark mode */
+    --sidebar-bg: #0b1120;
+    --sidebar-text: #94a3b8;
+    --sidebar-text-hover: #f1f5f9;
+    --sidebar-hover-bg: rgba(255, 255, 255, 0.08);
+    --sidebar-border: rgba(255, 255, 255, 0.08);
 }
 
 body {
@@ -27,9 +34,17 @@ body[data-bs-theme="light"] {
     --text-muted-color: #64748b;
     --border-color: #e2e8f0;
 
-    background-color: #f0f9ff; /* A light sky blue base */
-    /* A subtle gradient to a slightly darker blue, with neutral grey dots */
-    background-image: linear-gradient(to bottom, transparent, #e0f2fe), radial-gradient(circle at 1px 1px, #d4d6d7 1px, transparent 0);
+    /* Sidebar / mobile topbar surface — clean white in light mode, with a
+       hairline border to separate it from the equally-light main content */
+    --sidebar-bg: #ffffff;
+    --sidebar-text: #475569;
+    --sidebar-text-hover: #0f172a;
+    --sidebar-hover-bg: rgba(124, 58, 237, 0.08);
+    --sidebar-border: #e2e8f0;
+
+    background-color: #f8fafc; /* A soft, near-white base */
+    /* A subtle gradient with neutral dots — airy rather than blue-tinted */
+    background-image: linear-gradient(to bottom, transparent, #eef2f7), radial-gradient(circle at 1px 1px, #dbe1e8 1px, transparent 0);
     background-size: 20px 20px;
     color: var(--text-color);
 }
@@ -202,7 +217,7 @@ body[data-bs-theme="light"] .list-group-item {
 }
 
 .nav-pills .nav-link {
-    color: #94a3b8;
+    color: var(--sidebar-text);
     transition: color 0.2s ease, background-color 0.2s ease;
 }
 
@@ -212,8 +227,8 @@ body[data-bs-theme="light"] .list-group-item {
 }
 
 .nav-pills .nav-link:hover:not(.active) {
-    color: #f1f5f9;
-    background-color: rgba(255, 255, 255, 0.08);
+    color: var(--sidebar-text-hover);
+    background-color: var(--sidebar-hover-bg);
 }
 
 /* For StatCard Icons */
@@ -228,7 +243,7 @@ body[data-bs-theme="light"] .list-group-item {
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    text-emphasis-color: transparent;
+    text-fill-color: transparent;
 }
 
 .bg-clip-text {
@@ -238,11 +253,11 @@ body[data-bs-theme="light"] .list-group-item {
 /* Public Layout Footer */
 .home-footer {
     padding: 2rem 0;
-    background-color: #282727;
+    background-color: #0b1120;
 }
 
 body[data-bs-theme="light"] .home-footer {
-    background-color: #e9ecef; /* A light grey from bootstrap */
+    background-color: #f1f5f9;
 }
 
 
@@ -278,7 +293,7 @@ body[data-bs-theme="light"] .home-footer {
 }
 
 body[data-bs-theme="light"] .hero-aurora {
-    background-image: radial-gradient(circle, rgba(33, 70, 173, 0.1) 0%, rgba(13, 218, 215, 0.05) 50%, transparent 50%);
+    background-image: radial-gradient(circle, rgba(124, 58, 237, 0.16) 0%, rgba(219, 39, 119, 0.10) 50%, transparent 70%);
 }
 
 .testimonial-card {
@@ -324,11 +339,8 @@ html, body {
 .sidebar-desktop {
     width: 280px;
     min-height: 100vh;
-    background-color: rgb(15, 23, 42);
-}
-
-body[data-bs-theme="light"] .sidebar-desktop {
-    background-color: #0f172a;
+    background-color: var(--sidebar-bg);
+    border-right: 1px solid var(--sidebar-border);
 }
 
 /* Flex children (like tables) can otherwise force the layout wider than the
@@ -341,38 +353,26 @@ body[data-bs-theme="light"] .sidebar-desktop {
     position: sticky;
     top: 0;
     z-index: 1020;
-    background-color: rgb(15, 23, 42);
-    border-bottom: 1px solid var(--border-color);
-    color: #e2e8f0;
+    background-color: var(--sidebar-bg);
+    border-bottom: 1px solid var(--sidebar-border);
+    color: var(--sidebar-text-hover);
 }
 
 .mobile-topbar .btn-outline-secondary {
-    color: #cbd5e1;
-    border-color: #475569;
+    color: var(--sidebar-text);
+    border-color: var(--sidebar-border);
 }
 
 .mobile-topbar .btn-outline-secondary:hover {
-    color: #0f172a;
-    background-color: #e2e8f0;
-    border-color: #e2e8f0;
-}
-
-/* The drawer this topbar opens is always dark too, so keep the topbar
-   dark in both themes instead of flipping to white — otherwise tapping
-   the menu button feels like jumping into a different app skin. */
-body[data-bs-theme="light"] .mobile-topbar {
-    background-color: rgb(15, 23, 42);
+    color: #fff;
+    background-color: var(--primary-glow);
+    border-color: var(--primary-glow);
 }
 
 .sidebar-offcanvas {
     width: 280px;
-    background-color: rgb(15, 23, 42);
-    color: var(--text-color);
-}
-
-body[data-bs-theme="light"] .sidebar-offcanvas {
-    background-color: #0f172a;
-    color: #e2e8f0;
+    background-color: var(--sidebar-bg);
+    color: var(--sidebar-text-hover);
 }
 
 .sidebar-offcanvas .btn-close {

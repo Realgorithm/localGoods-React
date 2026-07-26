@@ -81,15 +81,18 @@ const Sidebar = () => (
 );
 
 // Slide-in drawer used below the lg breakpoint. Controlled by MainLayout.
-export const MobileSidebar = ({ show, onHide }) => (
-    <Offcanvas show={show} onHide={onHide} placement="start" className="sidebar-offcanvas d-lg-none">
-        <Offcanvas.Header closeButton closeVariant="white">
-            <Offcanvas.Title>LocalGoods</Offcanvas.Title>
-        </Offcanvas.Header>
-        <Offcanvas.Body className="d-flex flex-column pt-0">
-            <SidebarNav onNavigate={onHide} />
-        </Offcanvas.Body>
-    </Offcanvas>
-);
+export const MobileSidebar = ({ show, onHide }) => {
+    const { theme } = useTheme();
+    return (
+        <Offcanvas show={show} onHide={onHide} placement="start" className="sidebar-offcanvas d-lg-none">
+            <Offcanvas.Header closeButton closeVariant={theme === 'light' ? undefined : 'white'}>
+                <Offcanvas.Title>Menu</Offcanvas.Title>
+            </Offcanvas.Header>
+            <Offcanvas.Body className="d-flex flex-column pt-0">
+                <SidebarNav onNavigate={onHide} />
+            </Offcanvas.Body>
+        </Offcanvas>
+    );
+};
 
 export default Sidebar;
